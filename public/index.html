@@ -453,15 +453,17 @@ function handleMsg(msg) {
       if (isHost) show('hostBattlePanel');
       break;
 
-    // ===== 同步作答回合：全员同一题 =====
-    case 'round_question':
+    // ===== 独立答题：每人各自进度 =====
+    case 'player_question':
       if (!isHost) showQuestion(msg);
-      else { show('hostBattlePanel'); renderHostQuestion(msg); }
       break;
 
-    case 'round_result':
-      if (!isHost) revealRound(msg);
-      else renderHostResolve(msg);
+    case 'action_result':
+      if (!isHost) revealAction(msg);
+      break;
+
+    case 'player_done':
+      if (!isHost) showDone();
       break;
 
     case 'pick_target':
@@ -533,28 +535,20 @@ function showPickTarget(msg) {
     wrap.appendChild(b);
   });
 }
-function revealRound(msg) {
+function revealAction(msg) {
   stopCountdown();
-  // 队伍血条更新（按 maxHp 比例）
   const strip = document.getElementById('teamStrip');
   strip.innerHTML = (msg.teams || []).map(t => {
     const hp = Math.max(0, t.hp); const mx = t.maxHp || t.hp || 1;
     return `<div class="mini-team ${t.alive?'':'dying'}" style="border-color:${t.color}">
-      <div class="mt-name" style="color:${t.color}">${t.name}${t.shield?` 🛡️`:''}</div>
+      <div class="mt-name" style="color:${t.color}">${t.name}</div>
       <div class="mt-hp"><i style="width:${hp/mx*100}%;background:${t.color}"></i></div>
       <div style="font-size:10px;color:#aaa">${hp}/${mx}</div>
     </div>`;
   }).join('');
-  // 高亮正确/错误选项
-  const btns = document.querySelectorAll('#optsBox .option-btn');
-  btns.forEach(b => {
-    if (b.textContent.slice(3).trim() === msg.answer) b.classList.add('correct');
-    else if (parseInt(b.dataset.idx) === msg.choiceIdx) b.classList.add('wrong');
-  });
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal ' + (msg.correct ? 'right show' : 'wrong show');
   let txt = msg.correct ? `✅ 答对了！` : `❌ 答错了！正确答案：<b>${msg.answer}</b>`;
-  // 个人行动反馈
   const a = msg.action;
   if (a) {
     if (a.type === 'wrong') txt += `<br>💥 本队受到 ${a.penalty} 点惩罚伤害`;
@@ -562,15 +556,18 @@ function revealRound(msg) {
     else if (a.type === 'shield') txt += `<br>🛡️ 你为全队加了护盾（减免下一次伤害 ${a.reduction}%）${a.streak>=2?`（连对 ${a.streak} 次）`:''}`;
   }
   txt += `<br><span style="font-size:13px;color:#ccc">${msg.explain}</span>`;
+  txt += msg.correct ? '<br><span style="color:#2ecc71">➡️ 正在进入下一题...</span>' : '<br><span style="color:#f39c12">⏳ 冷却6秒后进入下一题...</span>';
   rb.innerHTML = txt;
-  // 我的队伍受击抖动
-  if (msg.teams && myTeam) {
-    const idx = msg.teams.findIndex(t => t.name === myTeam.name);
-    if (idx >= 0) {
-      const el = document.querySelectorAll('.mini-team')[idx];
-      if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
-    }
-  }
+}
+function showDone() {
+  show('answerPanel');
+  stopCountdown();
+  document.getElementById('qNum').textContent = '🎉 你已答完所有题';
+  document.getElementById('qText').innerHTML = '<div style="font-size:60px">🏁</div><div>等待其他玩家完成...</div>';
+  document.getElementById('optsBox').innerHTML = '';
+  const rb = document.getElementById('revealBox');
+  rb.className = 'reveal show';
+  rb.innerHTML = '你已完成全部 24 题，等待游戏结算...';
 }
 
 // ===== 主持人：题目与战场 =====
@@ -664,24 +661,38 @@ function flySkill(fromEl, toEl, emoji, color, dmg) {
 function showResult(msg) {
   show('resultPanel');
   confetti();
-  const ranks = msg.ranking;
-  document.getElementById('championText').textContent = `👑 ${ranks[0].name} 获得总冠军！`;
+  const tr = msg.teamRank || [];
+  const winner = tr[0];
+  document.getElementById('championText').innerHTML = winner
+    ? `👑 ${winner.name} 获胜！（剩余血量 ${Math.round(winner.hp)}/${winner.maxHp}）`
+    : '比赛结束';
+  // 队伍排名
   const box = document.getElementById('finalRanks');
-  box.innerHTML = '<p style="text-align:center;color:#ffd700;margin:10px 0">🏆 全场前五名</p>';
-  ranks.slice(0, 5).forEach((r, i) => {
-    const medal = ['🥇','🥈','🥉','4️⃣','5️⃣'][i];
-    const div = document.createElement('div');
-    div.className = 'rank-item r' + (i + 1);
-    div.innerHTML = `
+  let html = '<p style="text-align:center;color:#ffd700;margin:10px 0">🏆 队伍排名（按剩余血量）</p>';
+  html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
+  tr.forEach((t, i) => {
+    const pct = t.maxHp ? Math.max(0, t.hp / t.maxHp * 100) : 0;
+    html += `<div style="min-width:140px;padding:10px;border-radius:12px;border:2px solid ${t.color};background:rgba(255,255,255,0.05)">
+      <div style="color:${t.color};font-weight:bold">${['🥇','🥈','🥉','4️⃣'][i]||i+1} ${t.name}</div>
+      <div style="font-size:12px;color:#aaa">${t.members}人</div>
+      <div style="height:6px;background:#222;border-radius:3px;margin-top:6px"><i style="display:block;height:100%;width:${pct}%;background:${t.color};border-radius:3px"></i></div>
+      <div style="font-size:12px;color:#ccc;margin-top:4px">${Math.round(t.hp)}/${t.maxHp}</div>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<p style="text-align:center;color:#ffd700;margin:10px 0">📋 个人正确率榜</p>';
+  (msg.ranking || []).slice(0, 8).forEach((r, i) => {
+    const medal = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'][i] || (i+1)+'️⃣';
+    html += `<div class="rank-item r${Math.min(i+1,5)}">
       <div class="rank-medal">${medal}</div>
       <div class="rank-avatar">${r.photo?`<img src="${r.photo}">`:'❓'}</div>
       <div class="rank-info">
         <div class="rn">${esc(r.name)}</div>
         <div class="rd">${r.teamName} · ${r.skill.emoji}${r.skill.name} · 答对${r.correct}/${r.total}</div>
       </div>
-      <div class="rank-score">${r.score}</div>`;
-    box.appendChild(div);
+    </div>`;
   });
+  box.innerHTML = html;
   document.getElementById('replayBtn').style.display = isHost ? 'inline-block' : 'none';
 }
 function renderStats(stats) {
