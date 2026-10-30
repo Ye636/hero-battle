@@ -407,6 +407,22 @@ function handleMsg(msg) {
       else renderHostResolve(msg);
       break;
 
+    case 'strategy_prompt':
+      if (!isHost) showStrategy(msg);
+      break;
+
+    case 'strategy_waiting':
+      if (!isHost) waitingStrategy(msg);
+      break;
+
+    case 'strategy_result':
+      if (!isHost) strategyDone(msg);
+      break;
+
+    case 'shield_up':
+      if (isHost) shieldFx(msg);
+      break;
+
     case 'state_update':
       if (isHost) renderHostState(msg);
       break;
@@ -499,6 +515,67 @@ function revealRound(msg) {
   }
 }
 
+// ===== 先手权（答得快且正确率高 → 进攻或防御）=====
+let pendingStrategy = null;
+function showStrategy(msg) {
+  show('answerPanel');
+  pendingStrategy = msg;
+  const rb = document.getElementById('revealBox');
+  rb.className = 'reveal show';
+  rb.style.borderLeft = '4px solid #f1c40f';
+  rb.style.background = 'rgba(241,196,15,.12)';
+  rb.innerHTML = `
+    <div style="font-weight:bold;color:#ffd700">🎯 先手权！你们的队伍答得又快又准</div>
+    <div style="font-size:13px;color:#ccc;margin:6px 0">选择进攻敌方，或防御本队抵挡下一波攻击</div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn" onclick="vote('attack')">🗡️ 进攻</button>
+      <button class="btn green" onclick="vote('defend')">🛡️ 防御本队</button>
+    </div>
+    <div id="targetPick" style="display:none;margin-top:10px">
+      <div style="font-size:13px;color:#ccc;margin-bottom:6px">选择要进攻的敌方队伍：</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="targetBtns"></div>
+    </div>`;
+}
+function vote(action) {
+  if (!pendingStrategy) return;
+  const rb = document.getElementById('revealBox');
+  if (action === 'defend') {
+    send({ type: 'strategy', action: 'defend' });
+    rb.innerHTML = '<div style="color:#2ecc71">🛡️ 已提交：防御本队</div>';
+    return;
+  }
+  document.getElementById('targetPick').style.display = 'block';
+  const box = document.getElementById('targetBtns');
+  box.innerHTML = '';
+  (pendingStrategy.enemies || []).forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.style.background = 'linear-gradient(135deg,' + e.color + ',#333)';
+    b.textContent = '⚔️ ' + e.name;
+    b.onclick = () => {
+      send({ type: 'strategy', action: 'attack', targetIdx: e.idx });
+      rb.innerHTML = '<div style="color:#ff6b6b">🗡️ 已提交：进攻 ' + esc(e.name) + '</div>';
+    };
+    box.appendChild(b);
+  });
+}
+function waitingStrategy(msg) {
+  show('answerPanel');
+  const rb = document.getElementById('revealBox');
+  rb.className = 'reveal show';
+  rb.style.borderLeft = '4px solid #f1c40f';
+  rb.style.background = 'rgba(0,0,0,.3)';
+  rb.innerHTML = `<div style="font-size:14px">⏳ 等待 <b style="color:#ffd700">${esc(msg.teamName)}</b> 选择进攻或防御...</div>`;
+}
+function strategyDone(msg) {
+  const rb = document.getElementById('revealBox');
+  if (msg.action === 'defend') {
+    rb.innerHTML = `<div style="font-size:14px">🛡️ 你的队伍选择<b>防御</b>，护盾可减免 <b style="color:#2ecc71">${msg.reduction}%</b> 的下一次伤害</div>`;
+  } else {
+    rb.innerHTML = `<div style="font-size:14px">🗡️ 你的队伍进攻了 <b style="color:#ff6b6b">${esc(msg.targetName)}</b>，造成 ${msg.damage} 伤害</div>`;
+  }
+}
+
 // ===== 主持人：题目与战场 =====
 function renderHostQuestion(msg) {
   document.getElementById('hqNum').textContent = `第 ${msg.qNum} 题`;
@@ -513,7 +590,7 @@ function renderHostState(s) {
   const row = document.getElementById('hostArena');
   row.innerHTML = (s.teams || []).map((t, i) =>
     `<div class="host-team ${t.alive?'':'dead'}" data-team="${t.idx}" style="border-color:${t.color}">
-      <span class="big-emoji">${t.skill.emoji}</span>
+      <span class="big-emoji">${t.skill.emoji}${t.shield?` <span class="shield-badge" style="font-size:22px" title="护盾减免${t.shield}%">🛡️</span>`:''}</span>
       <div class="ht-name" style="color:${t.color}">${t.name}</div>
       <div class="host-hp"><i style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></i><span>${t.hp}</span></div>
       <div class="host-members">${t.members.map(m=>m.photo?`<img src="${m.photo}" title="${esc(m.name)}">`:`<span class="mini-av" title="${esc(m.name)}">${m.skill?m.skill.emoji:'?'}</span>`).join('')}</div>
@@ -524,6 +601,29 @@ function renderHostState(s) {
     document.getElementById('hAnswered').textContent = `已作答 ${s.answered} 人`;
   }
   renderHostLog(s.log);
+}
+function shieldFx(msg) {
+  const row = document.getElementById('hostArena');
+  const el = row.querySelector(`.host-team[data-team="${msg.teamIdx}"]`);
+  if (el) {
+    // 在队伍上方浮现护盾
+    const arena = document.getElementById('hostArena');
+    const ar = arena.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const s = document.createElement('div');
+    s.style.position = 'absolute'; s.style.fontSize = '40px'; s.style.zIndex = '30';
+    s.style.left = (r.left - ar.left + r.width / 2 - 20) + 'px';
+    s.style.top = (r.top - ar.top - 30) + 'px';
+    s.textContent = '🛡️';
+    s.style.animation = 'bounce 1s infinite';
+    arena.appendChild(s);
+    setTimeout(() => s.remove(), 2000);
+  }
+  const log = document.getElementById('hostLog');
+  const p = document.createElement('p');
+  p.style.color = '#f1c40f';
+  p.textContent = `🛡️ ${msg.teamName} 升起护盾（减免 ${msg.reduction}%）`;
+  log.appendChild(p); log.scrollTop = log.scrollHeight;
 }
 function renderHostResolve(msg) {
   stopCountdown();
