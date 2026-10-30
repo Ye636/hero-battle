@@ -13,9 +13,9 @@ const PORT = parseInt(process.env.PORT) || 3000;
 const TEAM_SIZE = parseInt(process.env.TEAM_SIZE) || 5; // 每队人数上限（默认4~5人一组），可配
 const HOST_PASSWORD = process.env.HOST_PASSWORD || '666'; // 进入主持人模式的密码，可配
 const ROUND_TIME_MS = parseInt(process.env.ROUND_TIME_MS) || 15000; // 每题作答倒计时(秒x1000)
-const RESULT_DELAY_MS = parseInt(process.env.RESULT_DELAY_MS) || 4500; // 揭晓结果后到下一题的间隔
-const PERSON_HP = parseInt(process.env.PERSON_HP) || 50;     // 每人基础血量（队伍HP = 人数 × 个人血量）
-const WRONG_PENALTY = parseInt(process.env.WRONG_PENALTY) || 15; // 答错本队扣血（护盾不挡）
+const RESULT_DELAY_MS = parseInt(process.env.RESULT_DELAY_MS) || 6000; // 揭晓后冷却6秒再下一题
+const PERSON_HP = parseInt(process.env.PERSON_HP) || 300;     // 每人基础血量（队伍HP = 人数 × 个人血量），调高以撑完所有题
+const WRONG_PENALTY = parseInt(process.env.WRONG_PENALTY) || 5;  // 答错本队扣血（护盾不挡）
 const FAST_RATIO = 0.4;   // 作答耗时 ≤ 限时40% 视为"快答"，奖励伤害/护盾
 
 // ---------- 静态文件托管 ----------
@@ -64,11 +64,11 @@ const TEAM_POOL = [
 //  shield  盾牌手：不攻击，答对为全队加护盾减免下一次伤害
 const PLAYER_SKILLS = [
   { key: 'warrior', emoji: '⚔️', name: '战士', color: '#e74c3c',
-    desc: '单发伤害最高（45），但连对没有额外加成。适合稳扎稳打的主攻手。',
-    base: 45, streak: 0, guard: 0 },
+    desc: '单发伤害较高（25），但连对没有额外加成。适合稳扎稳打的主攻手。',
+    base: 25, streak: 0, guard: 0 },
   { key: 'mage', emoji: '🔥', name: '法师', color: '#9b59b6',
-    desc: '单发伤害较低（30），但每连对一次伤害 +10。越连对越恐怖，适合答题稳的核心。',
-    base: 30, streak: 10, guard: 0 },
+    desc: '单发较低（15），但每连对一次伤害 +5。越连对越恐怖，适合答题稳的核心。',
+    base: 15, streak: 5, guard: 0 },
   { key: 'shield', emoji: '🛡️', name: '盾牌手', color: '#f1c40f',
     desc: '不攻击。答对时为全队加护盾（减免下一次技能伤害约 40%），连对会增强护盾。',
     base: 0, streak: 0, guard: 40 }
@@ -92,7 +92,8 @@ const state = {
   nextTimer: null,  // 揭晓后下一轮定时器
   roundStart: 0,    // 本轮出题时间戳
   answerTime: {},   // playerId -> 作答耗时ms
-  shields: {}       // teamIdx -> {reduction}
+  shields: {},      // teamIdx -> {reduction}
+  roundTargetChoice: {} // playerId -> 自选攻击目标 teamIdx
 };
 
 // ---------- 辅助 ----------
@@ -114,15 +115,15 @@ function newTeam() {
   state.teams.push(t);
   return t;
 }
-// 自动分组：优先放入人数最少的未满队伍；至少保证有 2 支队伍（2 人及以上）
+// 自动分组：攒到4人后开新队，之后最少人优先、满5人开新队 → 自然形成4~5人一队
 function pickTeam() {
-  const prospectiveTotal = state.players.length + 1;
-  if (prospectiveTotal >= 2 && state.teams.length < 2) return newTeam();
-  let cand = state.teams
+  // 只有1个队且已有4人 → 开新队，保证每队约4~5人
+  if (state.teams.length === 1 && state.teams[0].members.length >= 4) return newTeam();
+  let cands = state.teams
     .filter(t => t.members.length < TEAM_SIZE)
-    .sort((a, b) => a.members.length - b.members.length)[0];
-  if (!cand) cand = newTeam();
-  return cand;
+    .sort((a, b) => a.members.length - b.members.length);
+  if (cands.length === 0) return newTeam();
+  return cands[0];
 }
 function teamOf(p) { return state.teams[p.teamIdx] || null; }
 function teamAlive(idx) { return state.teams[idx] && state.teams[idx].alive; }
@@ -194,13 +195,14 @@ function startRound() {
   state.roundCorrectPlayers = {};
   state.roundPerPlayer = {};
   state.answerTime = {};
+  state.roundTargetChoice = {};
   roundEvents = [];
   roundPerPlayer = {};
   roundCorrectPlayers = {};
   state.roundStart = Date.now();
   // 不足 2 支存活队伍 → 直接结算
   if (aliveTeams().length < 2) { endGame(); return; }
-  broadcast({ type: 'round_question', qNum: state.qNum + 1, question: q.q, options: q.options, roundTime: ROUND_TIME_MS / 1000 });
+  broadcast({ type: 'round_question', qNum: state.qNum + 1, question: q.q, img: q.img, options: q.options, roundTime: ROUND_TIME_MS / 1000 });
   sendHost(hostState());
   clearTimeout(state.roundTimer);
   state.roundTimer = setTimeout(resolveRound, ROUND_TIME_MS);
@@ -248,10 +250,16 @@ function resolveRound() {
     const fast = (state.answerTime[p.id] || ROUND_TIME_MS) <= ROUND_TIME_MS * FAST_RATIO;
     const sk = p.skill;
     if (sk.key === 'warrior' || sk.key === 'mage') {
-      // 攻击：自动打"本轮答错最多的存活敌方队"，无则随机
+      // 攻击：优先用玩家自选目标，未选则自动打"答错最多的存活敌队"
       let dmg = sk.base + (sk.streak || 0) * (p.streak - 1);
       if (fast) dmg += 8;
-      const target = pickAttackTarget(p);
+      let target = null;
+      const chosen = state.roundTargetChoice[p.id];
+      if (chosen != null && state.teams[chosen] && state.teams[chosen].alive) {
+        target = state.teams[chosen];
+      } else {
+        target = pickAttackTarget(p);
+      }
       if (target) {
         const final = teamDamage(target, dmg, p.teamIdx, p.name, sk.color, sk.emoji, sk.name);
         pp.action = { type: 'attack', targetName: target.name, damage: final, streak: p.streak, fast };
@@ -296,7 +304,11 @@ function finishRound() {
     });
   });
   sendHost(hostState());
-  if (checkEnd()) return;
+  // 答完所有题 → 结算（不再因中途血量归零提前结束，血量已调高以撑完所有题）
+  if (state.qNum >= QUESTIONS.length - 1) {
+    endGame();
+    return;
+  }
   clearTimeout(state.nextTimer);
   state.nextTimer = setTimeout(startRound, RESULT_DELAY_MS);
 }
@@ -472,9 +484,34 @@ function handleMsg(ws, msg) {
       if (chosenIdx < 0) return;
       state.roundAnswers[p.id] = chosenIdx;
       state.answerTime[p.id] = state.roundStart ? Date.now() - state.roundStart : 0;
-      // 全员都已作答 → 提前结算
-      const unanswered = aliveMembers().filter(id => state.roundAnswers[id] === undefined);
-      if (unanswered.length === 0 && state.roundTimer) {
+      // 答对的攻击手：弹出选目标
+      if (chosenIdx === q.answer && (p.skill.key === 'warrior' || p.skill.key === 'mage')) {
+        const enemies = aliveTeams().filter(x => x.idx !== p.teamIdx);
+        if (enemies.length) {
+          state.roundTargetChoice[p.id] = null; // 待选
+          sendTo(p.id, { type: 'pick_target', enemies });
+        }
+      }
+      // 全员都已作答（且选完目标）→ 提前结算
+      const unresolved = aliveMembers().filter(id =>
+        state.roundAnswers[id] === undefined || state.roundTargetChoice[id] !== undefined && state.roundTargetChoice[id] === null
+      );
+      if (unresolved.length === 0 && state.roundTimer) {
+        clearTimeout(state.roundTimer);
+        resolveRound();
+      }
+      break;
+    }
+    case 'attack_target': {
+      if (state.phase !== 'playing') return;
+      const p = playerFromId(ws.__id);
+      if (!p || state.roundTargetChoice[p.id] === undefined) return;
+      state.roundTargetChoice[p.id] = msg.targetIdx;
+      // 检查是否所有人都答完且选完目标
+      const unresolved = aliveMembers().filter(id =>
+        state.roundAnswers[id] === undefined || (state.roundTargetChoice[id] !== undefined && state.roundTargetChoice[id] === null)
+      );
+      if (unresolved.length === 0 && state.roundTimer) {
         clearTimeout(state.roundTimer);
         resolveRound();
       }

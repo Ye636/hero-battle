@@ -464,6 +464,10 @@ function handleMsg(msg) {
       else renderHostResolve(msg);
       break;
 
+    case 'pick_target':
+      if (!isHost) showPickTarget(msg);
+      break;
+
     case 'state_update':
       if (isHost) renderHostState(msg);
       break;
@@ -489,7 +493,7 @@ function showQuestion(msg) {
   show('answerPanel');
   stopCountdown();
   document.getElementById('qNum').textContent = `第 ${msg.qNum} 题`;
-  document.getElementById('qText').textContent = msg.question;
+  document.getElementById('qText').innerHTML = (msg.img ? `<div style="font-size:48px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
   msg.options.forEach((opt, i) => {
@@ -509,6 +513,25 @@ function lockIn(idx, box) {
   box.querySelectorAll('.option-btn').forEach(b => b.classList.add('locked'));
   box.querySelectorAll('.option-btn')[idx].classList.add('chosen');
   send({ type:'answer', choice: box.querySelectorAll('.option-btn')[idx].textContent.slice(3).trim() });
+}
+function showPickTarget(msg) {
+  const rb = document.getElementById('revealBox');
+  rb.className = 'reveal show';
+  rb.style.borderLeft = '4px solid #ff6b6b';
+  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！选择要攻击的队伍：</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px" id="pickBtns"></div>`;
+  const wrap = document.getElementById('pickBtns');
+  (msg.enemies || []).forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.style.background = 'linear-gradient(135deg,' + e.color + ',#333)';
+    b.textContent = '⚔️ ' + e.name;
+    b.onclick = () => {
+      send({ type: 'attack_target', targetIdx: e.idx });
+      wrap.innerHTML = '<div style="color:#2ecc71">已选择攻击 ' + esc(e.name) + '，等待其他玩家...</div>';
+    };
+    wrap.appendChild(b);
+  });
 }
 function revealRound(msg) {
   stopCountdown();

@@ -1,155 +1,175 @@
 // =====================================================
-// 英雄知识大乱斗 —— 题库
-// 来源：课本第四本 p372（-ity 词形变化 + exploration 选词填空）
-// 每题为 {q, options, answer, explain}
+// 英雄知识大乱斗 —— 题库（英文释义选择题，每题配 emoji 图）
+// 每题: { q(英文释义), img(emoji配图), options(英文单词), answer, explain }
 // =====================================================
 const QUESTIONS = [
-  // ---- A. suffix -ity：名词对应的形容词 ----
   {
-    q: '"curiosity"（好奇心）这个名词是由哪个形容词变来的？',
-    options: ['curious', 'cure', 'currently', 'curtain'],
+    q: 'A strong desire to learn or know something.',
+    img: '🤔',
+    options: ['curiosity', 'creativity', 'authenticity', 'clarity'],
     answer: 0,
-    explain: 'curious（好奇的）→ curiosity。属于规则变化（-ous → -osity）。'
+    explain: 'curiosity = 好奇心（a desire to learn/know）'
   },
   {
-    q: '"creativity"（创造力）是由哪个形容词变来的？',
-    options: ['create', 'creative', 'creature', 'creator'],
-    answer: 1,
-    explain: 'creative（有创造力的）→ creativity。规则变化。'
-  },
-  {
-    q: '"authenticity"（真实性）是由哪个形容词变来的？',
-    options: ['author', 'authentic', 'autumn', 'authority'],
-    answer: 1,
-    explain: 'authentic（真迹的、真正的）→ authenticity。'
-  },
-  {
-    q: '"clarity"（清晰）是由哪个形容词变来的？',
-    options: ['clear', 'clerk', 'class', 'climb'],
+    q: 'The ability to invent or make new and original things.',
+    img: '💡',
+    options: ['creativity', 'curiosity', 'mentality', 'humidity'],
     answer: 0,
-    explain: 'clear（清楚的）→ clarity。注意：clear → clarity 是不规则变化（去 e + -ity）。'
+    explain: 'creativity = 创造力'
   },
   {
-    q: '"possibility"（可能性）是由哪个形容词变来的？',
-    options: ['possible', 'posture', 'pocket', 'position'],
+    q: 'Being real or genuine, not copied or fake.',
+    img: '🎭',
+    options: ['authenticity', 'possibility', 'necessity', 'civility'],
     answer: 0,
-    explain: 'possible（可能的）→ possibility（le → bility）。'
+    explain: 'authenticity = 真实性、真伪'
   },
   {
-    q: '"necessity"（必需品/必然）是由哪个形容词变来的？',
-    options: ['necessary', 'nest', 'never', 'notice'],
+    q: 'The quality of being clear and easy to understand.',
+    img: '🔍',
+    options: ['clarity', 'intensity', 'humidity', 'mentality'],
     answer: 0,
-    explain: 'necessary（必要的）→ necessity（去 y + -ity）。不规则变化之一。'
+    explain: 'clarity = 清晰（clear 的名词形式，不规则变化）'
   },
   {
-    q: '"humidity"（湿度）是由哪个形容词变来的？',
-    options: ['human', 'humor', 'humid', 'hundred'],
-    answer: 2,
-    explain: 'humid（潮湿的）→ humidity。'
-  },
-  {
-    q: '"mentality"（心态）是由哪个形容词变来的？',
-    options: ['mental', 'mention', 'metal', 'menu'],
+    q: 'A chance that something may happen or be true.',
+    img: '🌱',
+    options: ['possibility', 'necessity', 'authenticity', 'curiosity'],
     answer: 0,
-    explain: 'mental（精神的、心理的）→ mentality。'
+    explain: 'possibility = 可能性（possible 的名词）'
   },
   {
-    q: '"intensity"（强度）是由哪个形容词变来的？',
-    options: ['intend', 'intense', 'intent', 'into'],
-    answer: 1,
-    explain: 'intense（强烈的）→ intensity。'
-  },
-  {
-    q: '"civility"（礼貌、文明）是由哪个形容词变来的？',
-    options: ['civil', 'citizen', 'city', 'circle'],
+    q: 'Something that you must have or must do.',
+    img: '⚙️',
+    options: ['necessity', 'possibility', 'intensity', 'civility'],
     answer: 0,
-    explain: 'civil（公民的、文明的）→ civility。'
+    explain: 'necessity = 必需品、必要（necessary 的名词，不规则变化）'
   },
-
-  // ---- B. exploration & discovery 选词填空 ----
   {
-    q: "Part of Sir Edmund Hillary's ___ to climb Mount Everest was for the thrill of being the first.",
-    options: ['motivation', 'mission', 'network', 'boundary'],
+    q: 'The amount of water vapor in the air.',
+    img: '💧',
+    options: ['humidity', 'clarity', 'mentality', 'curiosity'],
     answer: 0,
-    explain: 'motivation（动力）。希拉里攀登珠峰的部分动力在于成为第一人的那种刺激。'
+    explain: 'humidity = 湿度（humid 的名词）'
   },
   {
-    q: 'It was for the ___ of being the first to reach the top of Mount Everest.',
-    options: ['hypothesis', 'thrill', 'endurance', 'settlement'],
-    answer: 1,
-    explain: 'thrill（刺激、兴奋）。'
-  },
-  {
-    q: 'Polynesians explored the oceans by canoe and established ___ on islands around the Pacific.',
-    options: ['networks', 'boundaries', 'settlements', 'missions'],
-    answer: 2,
-    explain: 'establish settlements（建立定居点）。'
-  },
-  {
-    q: 'They set up extensive trading ___, exchanging many types of plants and animals.',
-    options: ['networks', 'boundaries', 'thrills', 'hypotheses'],
+    q: "A person's way of thinking or their mental attitude.",
+    img: '🧠',
+    options: ['mentality', 'creativity', 'intensity', 'authenticity'],
     answer: 0,
-    explain: 'trading networks（贸易网络）。'
+    explain: 'mentality = 心态、思维方式'
   },
   {
-    q: 'Isabella Bird ___ up an active volcano during her exploration of the United States.',
-    options: ['trekked', 'mapped', 'launched', 'sought'],
+    q: 'The strength or degree of something, often very strong.',
+    img: '🔥',
+    options: ['intensity', 'humidity', 'clarity', 'possibility'],
     answer: 0,
-    explain: 'trek up a volcano（长途跋涉登上火山）。'
+    explain: 'intensity = 强度（intense 的名词）'
   },
   {
-    q: 'Annie Londonderry became the first woman to ___ the world on a bicycle.',
-    options: ['circumnavigate', 'launch', 'motivate', 'settle'],
+    q: 'Polite, calm and respectful behaviour towards others.',
+    img: '🤝',
+    options: ['civility', 'necessity', 'mentality', 'curiosity'],
     answer: 0,
-    explain: 'circumnavigate（环航、环球）。'
+    explain: 'civility = 礼貌、文明（civil 的名词）'
   },
   {
-    q: 'The ___ of Apollo 8 in December 1968 marked a turning point in space exploration.',
-    options: ['launch', 'mission', 'boundary', 'settlement'],
+    q: 'The reason or drive that makes you want to do something.',
+    img: '🚀',
+    options: ['motivation', 'mission', 'boundary', 'thrill'],
     answer: 0,
-    explain: 'the launch of Apollo 8（阿波罗8号的发射）。'
+    explain: 'motivation = 动力、动机'
   },
   {
-    q: 'The human race was pushing the ___ of our knowledge about the universe.',
-    options: ['networks', 'boundaries', 'thrills', 'missions'],
-    answer: 1,
-    explain: 'push the boundaries of knowledge（拓展知识的边界）。'
-  },
-  {
-    q: "Shackleton tested the limits of his crew's ___ by sailing 720 miles across the South Atlantic.",
-    options: ['motivation', 'mission', 'endurance', 'hypothesis'],
-    answer: 2,
-    explain: 'endurance（耐力、忍耐力）。'
-  },
-  {
-    q: "NASA's Curiosity landed on Mars in 2012. Its ___ is to gather scientific data on climate and geology.",
-    options: ['mission', 'boundary', 'network', 'thrill'],
+    q: 'A sudden feeling of excitement and pleasure.',
+    img: '🎢',
+    options: ['thrill', 'endurance', 'network', 'settlement'],
     answer: 0,
-    explain: 'mission（任务）。'
+    explain: 'thrill = 刺激、兴奋'
   },
   {
-    q: 'Curiosity was sent to test the ___ about the existence of water on Mars.',
-    options: ['hypothesis', 'mission', 'boundary', 'endurance'],
+    q: 'A place where people come to live and make their homes.',
+    img: '🏠',
+    options: ['settlement', 'mission', 'hypothesis', 'boundary'],
     answer: 0,
-    explain: 'hypothesis（假设）。'
+    explain: 'settlement = 定居点'
   },
   {
-    q: 'Explorers like Zheng He, Vasco da Gama and James Cook ___ the world.',
-    options: ['mapped', 'launched', 'trekked', 'sought'],
+    q: 'A system of connected people, routes or things.',
+    img: '🕸️',
+    options: ['network', 'trek', 'launch', 'seek'],
     answer: 0,
-    explain: 'map the world（绘制世界地图）。'
+    explain: 'network = 网络'
   },
   {
-    q: 'They wanted to better humanity, not just ___ fame and fortune.',
-    options: ['seek', 'motivate', 'launch', 'endure'],
+    q: 'A long and difficult journey, usually on foot.',
+    img: '🥾',
+    options: ['trek', 'launch', 'circumnavigate', 'map'],
     answer: 0,
-    explain: 'seek fame and fortune（追逐名利）。'
+    explain: 'trek = 长途跋涉'
   },
   {
-    q: '下面哪个形容词 → 名词是**不规则**变化？',
-    options: ['clear → clarity', 'curious → curiosity', 'humid → humidity', 'civil → civility'],
+    q: 'To travel all the way around something, especially the world.',
+    img: '🌍',
+    options: ['circumnavigate', 'explore', 'launch', 'settle'],
     answer: 0,
-    explain: 'clear → clarity 是不规则变化（去 e）；其余多为规则加 -ity。'
+    explain: 'circumnavigate = 环航、环绕世界'
+  },
+  {
+    q: 'To send a ship, rocket or spacecraft into the sky or sea.',
+    img: '🛫',
+    options: ['launch', 'seek', 'endure', 'motivate'],
+    answer: 0,
+    explain: 'launch = 发射'
+  },
+  {
+    q: 'The line that marks the edge or limit of an area.',
+    img: '🚧',
+    options: ['boundary', 'network', 'mission', 'hypothesis'],
+    answer: 0,
+    explain: 'boundary = 边界'
+  },
+  {
+    q: 'The ability to continue doing something difficult for a long time.',
+    img: '🏃',
+    options: ['endurance', 'motivation', 'thrill', 'civility'],
+    answer: 0,
+    explain: 'endurance = 耐力'
+  },
+  {
+    q: 'An important job or task that someone is sent to do.',
+    img: '🎯',
+    options: ['mission', 'boundary', 'trek', 'seek'],
+    answer: 0,
+    explain: 'mission = 任务'
+  },
+  {
+    q: 'An idea that is tested through experiments to see if it is true.',
+    img: '🔬',
+    options: ['hypothesis', 'mission', 'settlement', 'network'],
+    answer: 0,
+    explain: 'hypothesis = 假设'
+  },
+  {
+    q: 'To discover or draw the features of an area or the world.',
+    img: '🗺️',
+    options: ['map', 'launch', 'endure', 'thrill'],
+    answer: 0,
+    explain: 'map (v.) = 绘制、勘测'
+  },
+  {
+    q: 'To look for or try to find something.',
+    img: '🔎',
+    options: ['seek', 'launch', 'motivate', 'endure'],
+    answer: 0,
+    explain: 'seek = 寻找'
+  },
+  {
+    q: 'A person who travels to new and unknown places to discover them.',
+    img: '🧭',
+    options: ['explorer', 'settler', 'captain', 'pilot'],
+    answer: 0,
+    explain: 'explorer = 探险家'
   }
 ];
 
