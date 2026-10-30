@@ -319,6 +319,21 @@ function handleMsg(ws, msg) {
       advanceTurn();
       break;
     }
+    case 'reset_game': {
+      // 主持人点"再来一局"：重置到大厅，保留在线玩家与分组，可无限次开战
+      if (ws.__id !== state.hostId) { sendTo(ws.__id, { type: 'error', msg: '只有主持人能重置游戏' }); return; }
+      state.phase = 'lobby';
+      state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
+      state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; });
+      state.curIdx = 0;
+      state.qNum = 0;
+      state.log = [];
+      state.waiting = null;
+      broadcast({ type: 'game_reset' });
+      broadcast(lobbyUpdate());
+      sendHost(hostState());
+      break;
+    }
     default:
       break;
   }
