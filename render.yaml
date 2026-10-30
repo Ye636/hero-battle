@@ -5,7 +5,3 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: node server.js
-    envVars:
-      - key: TEAM_SIZE
-        value: "3"
-        sync: false
