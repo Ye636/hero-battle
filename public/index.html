@@ -2,340 +2,387 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>英雄知识大乱斗</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 <style>
-:root{--gold:#ffd700;--red:#ff4757;--blue:#3498db;--green:#2ecc71;--purple:#9b59b6;--cyan:#00d2ff}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:radial-gradient(ellipse at top,#1a0a2e,#0a0a1a 60%,#000);min-height:100vh;color:#fff;overflow-x:hidden}
-.stars{position:fixed;inset:0;pointer-events:none;z-index:0}
-.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 3s infinite}
-@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:1}}
-.wrap{max-width:600px;margin:0 auto;padding:16px;position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
-h1{text-align:center;font-size:24px;margin:10px 0;background:linear-gradient(90deg,var(--gold),#ff6b9d,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.panel{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:20px;backdrop-filter:blur(10px);margin-bottom:14px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
-.hidden{display:none!important}
-.btn{padding:13px 28px;border:none;border-radius:30px;cursor:pointer;background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;font-weight:bold;font-size:15px;transition:.2s;box-shadow:0 4px 15px rgba(238,90,36,.4)}
-.btn:hover{transform:translateY(-2px)}
-.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn.green{background:linear-gradient(135deg,#2ecc71,#27ae60);box-shadow:0 4px 15px rgba(46,204,113,.4)}
-.btn.blue{background:linear-gradient(135deg,#3498db,#2980b9)}
-.btn.large{padding:16px 40px;font-size:18px}
-.link-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#aaa;border-radius:20px;padding:8px 16px;font-size:13px;cursor:pointer}
-
-/* 加入页 */
-#joinPanel{text-align:center;margin-top:auto;margin-bottom:auto}
-.avatar-upload{width:110px;height:110px;border-radius:50%;margin:0 auto 12px;cursor:pointer;background:linear-gradient(135deg,#333,#555);display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden;border:3px solid rgba(255,255,255,.2);transition:.3s}
-.avatar-upload:hover{border-color:var(--gold);transform:scale(1.05)}
-.avatar-upload img{width:100%;height:100%;object-fit:cover}
-.avatar-upload input{display:none}
-input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;font-size:16px;text-align:center;margin:8px 0}
-input:focus{outline:none;border-color:var(--gold)}
-.hint-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#777}
-
-/* 大厅玩家列表 */
-.player-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
-.player-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,.08);border-radius:20px;font-size:13px}
-.player-chip img{width:24px;height:24px;border-radius:50%;object-fit:cover}
-.my-team{text-align:center;padding:14px;border-radius:14px;border:2px solid;margin:12px 0;background:rgba(0,0,0,.2)}
-.team-tag{display:inline-block;font-size:16px;font-weight:bold}
-
-/* 主持人房间页 */
-#hostPanel{max-width:600px;margin:20px auto}
-.room-code{text-align:center;font-size:20px;font-weight:bold;color:var(--gold);margin:8px 0}
-#hostQrBox{display:flex;justify-content:center;background:#fff;padding:12px;border-radius:14px;margin:10px auto;width:fit-content}
-.qr-caption{text-align:center;font-size:13px;color:#aaa;margin:6px 0}
-.teams-preview{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0}
-.team-prev{border-radius:12px;padding:10px 14px;border:2px solid;background:rgba(0,0,0,.2);min-width:120px;text-align:center}
-.team-prev b{font-size:14px}
-.team-prev .cnt{font-size:12px;color:#ccc;margin-top:2px}
-
-/* 答题界面 */
-.question-card{background:rgba(0,0,0,.35);border-radius:16px;padding:20px;margin:10px 0}
-.q-text{font-size:18px;line-height:1.6;margin-bottom:16px}
-.opt-btn{display:block;width:100%;padding:14px;margin:8px 0;border:2px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.06);color:#fff;font-size:16px;cursor:pointer;transition:.2s;text-align:left}
-.opt-btn:hover:not(:disabled){border-color:var(--gold);background:rgba(255,215,0,.12)}
-.opt-btn.correct{border-color:var(--green);background:rgba(46,204,113,.3)}
-.opt-btn.wrong{border-color:var(--red);background:rgba(231,76,60,.3)}
-.opt-btn:disabled{cursor:not-allowed;opacity:.7}
-
-/* 等待界面 */
-.waiting-screen{text-align:center;padding:40px 20px}
-.waiting-spinner{width:50px;height:50px;border:4px solid rgba(255,255,255,.1);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* 目标选择 */
-.target-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.target-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:12px;border:2px solid;cursor:pointer;transition:.2s;background:rgba(0,0,0,.2)}
-.target-item:hover{transform:scale(1.02)}
-
-/* 结算 */
-.rank-item{display:flex;align-items:center;gap:12px;padding:12px;margin:6px 0;background:rgba(255,255,255,.06);border-radius:12px;border-left:4px solid #555}
-.rank-item.r1{border-left-color:var(--gold);background:linear-gradient(90deg,rgba(255,215,0,.15),transparent)}
-.rank-item.r2{border-left-color:#c0c0c0}
-.rank-item.r3{border-left-color:#cd7f32}
-.rank-medal{font-size:24px}
-.rank-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:20px;background:#444;border:2px solid rgba(255,255,255,.2)}
-.rank-avatar img{width:100%;height:100%;object-fit:cover}
-.rank-info{flex:1}
-.rank-info .rn{font-weight:bold}
-.rank-info .rd{font-size:12px;color:#999}
-.rank-score{font-size:18px;font-weight:bold;color:var(--gold)}
-
-/* 错题回顾（主持人结算页） */
-.stat-block{background:rgba(255,255,255,.06);border-radius:12px;padding:14px;margin-top:14px}
-.stat-block b{color:var(--gold);display:block;margin-bottom:8px}
-.stat-none{color:#999;font-size:13px;padding:6px 0}
-.stat-item{border-left:3px solid #e74c3c;background:rgba(231,76,60,.08);border-radius:8px;padding:8px 12px;margin:6px 0}
-.stat-q{font-size:13px;color:#eee;font-weight:bold}
-.stat-t{font-size:13px;color:#bbb;margin:3px 0}
-.stat-opts{display:flex;gap:6px;flex-wrap:wrap}
-.stat-opt{font-size:11px;background:#e74c3c;color:#fff;border-radius:20px;padding:2px 9px}
-
-/* 主持人战斗大屏 */
-#hostBattlePanel{max-width:900px;margin:0 auto}
-.host-arena{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:10px 0}
-.host-team{background:rgba(255,255,255,.06);border-radius:12px;padding:10px;text-align:center;border:2px solid;transition:.3s}
-.host-team.dead{opacity:.3;filter:grayscale(1)}
-.host-team.active{box-shadow:0 0 20px rgba(255,215,0,.5);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 12px rgba(255,215,0,.3)}50%{box-shadow:0 0 25px rgba(255,215,0,.6)}}
-.host-team-hp{background:rgba(0,0,0,.5);border-radius:6px;height:12px;overflow:hidden;margin-top:6px;position:relative}
-.host-team-hp>div{height:100%;transition:width .5s}
-.host-team-hp span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;font-weight:bold}
-.host-team-members{display:flex;justify-content:center;gap:3px;margin-top:6px;flex-wrap:wrap}
-.mini-av{width:24px;height:24px;border-radius:50%;overflow:hidden;border:1.5px solid rgba(255,255,255,.3);font-size:11px;display:flex;align-items:center;justify-content:center}
-.mini-av img{width:100%;height:100%;object-fit:cover}
-.hero-show{display:flex;align-items:center;gap:14px;padding:12px;background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,107,107,.1));border-radius:14px;margin:10px 0;border:1px solid rgba(255,215,0,.3)}
-.big-av{width:70px;height:70px;border-radius:50%;overflow:hidden;flex-shrink:0;border:3px solid var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);display:flex;align-items:center;justify-content:center;font-size:36px;background:#333}
-.big-av img{width:100%;height:100%;object-fit:cover}
-.log-box{background:rgba(0,0,0,.3);border-radius:10px;padding:10px;height:90px;overflow-y:auto;font-size:12px;line-height:1.6;margin-top:10px}
-
-/* 特效 */
-.fx-overlay{position:fixed;inset:0;pointer-events:none;z-index:999;display:flex;align-items:center;justify-content:center}
-.fx-skill{font-size:90px;animation:skillZoom 1.2s ease-out forwards;filter:drop-shadow(0 0 30px currentColor)}
-@keyframes skillZoom{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.3);opacity:1}100%{transform:scale(2.5);opacity:0}}
-.fx-text{position:absolute;font-size:48px;font-weight:bold;animation:floatUp 1.5s ease-out forwards;text-shadow:0 0 20px currentColor}
-@keyframes floatUp{0%{transform:translateY(0) scale(.5);opacity:0}20%{transform:translateY(-30px) scale(1.2);opacity:1}100%{transform:translateY(-200px) scale(1);opacity:0}}
-.fx-shake{animation:screenShake .5s}
-@keyframes screenShake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(8px,-4px)}30%{transform:translate(-6px,-6px)}40%{transform:translate(6px,6px)}50%{transform:translate(-4px,2px)}60%{transform:translate(4px,-2px)}}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+    min-height:100vh;color:#fff;
+    padding:16px;
+  }
+  .wrap{max-width:720px;margin:0 auto}
+  h1{
+    text-align:center;font-size:30px;margin-bottom:16px;
+    background:linear-gradient(90deg,#ffd700,#ff6b6b,#ffd700);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    animation:titleGlow 2.5s ease-in-out infinite;
+  }
+  @keyframes titleGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(255,215,0,.3))}50%{filter:drop-shadow(0 0 16px rgba(255,215,0,.7))}}
+  .panel{
+    background:rgba(255,255,255,.05);border-radius:20px;padding:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);
+    backdrop-filter:blur(10px);
+  }
+  .hidden{display:none!important}
+  .gold{color:#ffd700}
+  /* ---- 通用按钮 ---- */
+  .btn{
+    padding:12px 40px;font-size:16px;border:none;border-radius:25px;cursor:pointer;
+    background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;font-weight:bold;
+    transition:all .3s;
+  }
+  .btn:hover{transform:scale(1.05);box-shadow:0 5px 20px rgba(238,90,36,.5)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.green{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+  .btn.large{width:100%;padding:14px}
+  .link-btn{
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;
+    border-radius:20px;padding:8px 16px;cursor:pointer;font-size:14px;transition:all .3s;
+  }
+  .link-btn:hover{background:rgba(255,215,0,.15);border-color:#ffd700}
+  input[type=text]{
+    width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+    background:rgba(0,0,0,.3);color:#fff;font-size:15px;text-align:center;outline:none;
+  }
+  /* ---- 加入页 ---- */
+  .avatar-upload{
+    width:90px;height:90px;margin:8px auto;border-radius:50%;cursor:pointer;
+    background:rgba(255,255,255,.08);border:2px dashed rgba(255,255,255,.3);
+    display:flex;align-items:center;justify-content:center;font-size:40px;overflow:hidden;
+    transition:all .3s;position:relative;
+  }
+  .avatar-upload:hover{border-color:#ffd700;background:rgba(255,215,0,.1)}
+  .avatar-upload img{width:100%;height:100%;object-fit:cover}
+  .hint-bar{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:#aaa;font-size:13px}
+  /* ---- 队伍预览（主持人大厅） ---- */
+  .teams-preview{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .team-prev{flex:1;min-width:80px;background:rgba(255,255,255,.05);border:2px solid;border-radius:12px;padding:8px;text-align:center;animation:pop .4s}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+  .team-prev .cnt{font-size:12px;color:#ccc}
+  .player-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .player-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px;font-size:13px;animation:pop .3s}
+  .player-chip img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+  .room-code{text-align:center;color:#aaa;font-size:12px;margin-bottom:6px}
+  .qr-caption{text-align:center;color:#aaa;font-size:12px;margin-top:6px}
+  /* ---- 学生等待大厅 ---- */
+  .waiting-spinner{width:42px;height:42px;margin:8px auto;border:4px solid rgba(255,215,0,.2);border-top-color:#ffd700;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .my-team{border:2px solid #888;border-radius:16px;padding:14px;margin-top:12px;background:rgba(0,0,0,.2)}
+  .team-tag{font-weight:bold;font-size:18px}
+  /* ---- 队伍血条条（学生作答顶部） ---- */
+  .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
+  .mini-team{flex:1;min-width:120px;background:rgba(0,0,0,.25);border:2px solid;border-radius:12px;padding:6px 8px;text-align:center;position:relative;transition:.3s}
+  .mini-team.dying{opacity:.5;filter:grayscale(.7)}
+  .mini-team .mt-name{font-size:13px;font-weight:bold}
+  .mini-team .mt-hp{height:10px;background:rgba(0,0,0,.5);border-radius:6px;overflow:hidden;margin-top:4px}
+  .mini-team .mt-hp i{display:block;height:100%;background:linear-gradient(90deg,#2ecc71,#27ae60);transition:width .6s ease}
+  .mini-team.shake{animation:shake .5s}
+  /* ---- 题目与选项 ---- */
+  .question-box{background:rgba(0,0,0,.35);border-radius:16px;padding:18px;margin-top:10px;border:1px solid rgba(255,255,255,.08)}
+  .question-num{font-size:13px;color:#ffd700;margin-bottom:10px}
+  .question-text{font-size:18px;line-height:1.6;margin-bottom:14px;min-height:48px}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .option-btn{
+    padding:14px;border:2px solid rgba(255,255,255,.2);border-radius:12px;
+    background:rgba(255,255,255,.08);color:#fff;font-size:15px;cursor:pointer;
+    transition:all .2s;text-align:left;position:relative;
+  }
+  .option-btn:hover:not(:disabled){border-color:#ffd700;background:rgba(255,215,0,.15);transform:translateY(-2px)}
+  .option-btn.locked{opacity:.6;cursor:not-allowed}
+  .option-btn.chosen{border-color:#ffd700;background:rgba(255,215,0,.2);box-shadow:0 0 14px rgba(255,215,0,.4)}
+  .option-btn.correct{border-color:#2ecc71;background:rgba(46,204,113,.35);animation:correctPop .5s}
+  .option-btn.wrong{border-color:#e74c3c;background:rgba(231,76,60,.35);animation:shake .5s}
+  @keyframes correctPop{0%{transform:scale(.85)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  /* ---- 倒计时 ---- */
+  .cd-wrap{position:relative;height:14px;background:rgba(0,0,0,.4);border-radius:8px;overflow:hidden;margin-top:12px}
+  .cd-bar{height:100%;background:linear-gradient(90deg,#ffd700,#ff6b6b);width:100%;border-radius:8px;transition:width .1s linear}
+  .cd-bar.warn{animation:blink .5s infinite}
+  @keyframes blink{50%{opacity:.4}}
+  .cd-num{position:absolute;right:8px;top:-14px;font-size:14px;font-weight:bold;color:#ffd700;text-shadow:0 0 6px rgba(255,215,0,.6)}
+  /* ---- 揭晓 ---- */
+  .reveal{display:none;margin-top:14px;padding:14px;border-radius:12px;font-size:14px;line-height:1.6;animation:pop .4s}
+  .reveal.right{background:rgba(46,204,113,.15);border-left:4px solid #2ecc71}
+  .reveal.wrong{background:rgba(231,76,60,.15);border-left:4px solid #e74c3c}
+  .reveal.show{display:block}
+  /* ---- 主持人战斗大屏 ---- */
+  #hostBattlePanel{max-width:900px;margin:0 auto}
+  .host-arena{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0;position:relative}
+  .host-team{
+    background:rgba(255,255,255,.06);border-radius:16px;padding:12px;text-align:center;
+    border:2px solid;transition:.3s;position:relative;
+  }
+  .host-team.dead{opacity:.35;filter:grayscale(.8)}
+  .host-team.attacker{animation:charge .6s}
+  .host-team.hit{animation:hit .6s}
+  @keyframes charge{0%,100%{transform:scale(1)}40%{transform:scale(1.12) translateY(-6px)}}
+  @keyframes hit{0%,100%{transform:scale(1);filter:brightness(1)}40%{transform:scale(1.08);filter:brightness(1.8) sepia(1)}}
+  .host-team .big-emoji{font-size:52px;display:block;margin-bottom:4px}
+  .host-team .ht-name{font-weight:bold;font-size:14px}
+  .host-hp{height:16px;background:rgba(0,0,0,.4);border-radius:8px;overflow:hidden;margin-top:6px;position:relative}
+  .host-hp i{display:block;height:100%;background:linear-gradient(90deg,#2ecc71,#27ae60);transition:width .6s ease}
+  .host-hp span{position:absolute;inset:0;font-size:10px;display:flex;align-items:center;justify-content:center;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+  .host-members{display:flex;gap:4px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+  .host-members img,.host-members .mini-av{width:24px;height:24px;border-radius:50%;object-fit:cover;background:#333;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .host-qbox{background:rgba(0,0,0,.35);border-radius:16px;padding:16px;margin-top:10px;border:1px solid rgba(255,255,255,.08)}
+  .host-qbox .answered{font-size:13px;color:#aaa}
+  .host-log{background:rgba(0,0,0,.3);border-radius:12px;padding:10px;height:130px;overflow-y:auto;font-size:13px;line-height:1.8;margin-top:10px}
+  /* ---- 结算 ---- */
+  .rank-item{display:flex;align-items:center;gap:12px;padding:12px;margin:6px 0;background:rgba(255,255,255,.06);border-radius:12px;border-left:4px solid #555;animation:pop .4s}
+  .rank-item.r1{border-left-color:#ffd700;background:linear-gradient(90deg,rgba(255,215,0,.18),transparent)}
+  .rank-item.r2{border-left-color:#c0c0c0}
+  .rank-item.r3{border-left-color:#cd7f32}
+  .rank-medal{font-size:26px}
+  .rank-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:20px;background:#444;border:2px solid rgba(255,255,255,.2)}
+  .rank-avatar img{width:100%;height:100%;object-fit:cover}
+  .rank-info{flex:1}
+  .rank-info .rn{font-weight:bold}
+  .rank-info .rd{font-size:12px;color:#999}
+  .rank-score{font-size:18px;font-weight:bold;color:#ffd700}
+  .champion{text-align:center;font-size:26px;margin:8px 0;color:#ffd700;animation:bounce 1s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .stat-block{background:rgba(255,255,255,.06);border-radius:12px;padding:14px;margin-top:14px}
+  .stat-block b{color:#ffd700;display:block;margin-bottom:8px}
+  .stat-none{color:#999;font-size:13px;padding:6px 0}
+  .stat-item{border-left:3px solid #e74c3c;background:rgba(231,76,60,.08);border-radius:8px;padding:8px 12px;margin:6px 0}
+  .stat-q{font-size:13px;color:#eee;font-weight:bold}
+  .stat-t{font-size:13px;color:#bbb;margin:3px 0}
+  .stat-opts{display:flex;gap:6px;flex-wrap:wrap}
+  .stat-opt{font-size:11px;background:#e74c3c;color:#fff;border-radius:20px;padding:2px 9px}
+  /* ---- 飘字 / 技能飞行 / 彩带 ---- */
+  .fly-emoji{position:absolute;font-size:40px;pointer-events:none;z-index:30;filter:drop-shadow(0 0 8px rgba(255,255,255,.6))}
+  .dmg-num{position:absolute;font-size:22px;font-weight:bold;color:#ff6b6b;pointer-events:none;z-index:31;text-shadow:0 0 8px rgba(0,0,0,.8);animation:dmgFloat 1s forwards}
+  @keyframes dmgFloat{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-34px) scale(1.4)}}
+  .confetti{position:fixed;top:-10px;width:10px;height:14px;z-index:40;pointer-events:none;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+  .vs-badge{text-align:center;font-size:16px;color:#ffd700;margin:4px 0}
+  @media(max-width:500px){.options{grid-template-columns:1fr}.wrap{max-width:100%}}
 </style>
 </head>
 <body>
-<div class="stars" id="stars"></div>
+<div class="wrap">
 
-<!-- ========== 学生加入页（默认落地页，扫码直达） ========== -->
-<div class="wrap" id="joinPanel">
-  <h1>⚔️ 英雄知识大乱斗 ⚔️</h1>
-  <div class="panel" style="text-align:center">
-    <p style="margin-bottom:12px;color:#aaa">👋 上传头像、输入昵称即可加入战斗，系统会自动为你分配队伍</p>
-    <div class="avatar-upload" onclick="document.getElementById('fileInput').click()">
-      <span id="avatarIcon">🪖</span>
-      <input type="file" id="fileInput" accept="image/*">
+  <!-- ===== 学生加入页 ===== -->
+  <div id="joinPanel">
+    <h1>⚔️ 英雄知识大乱斗 ⚔️</h1>
+    <div class="panel" style="text-align:center">
+      <p style="margin-bottom:12px;color:#aaa">👋 上传头像、输入昵称即可加入战斗，系统会自动为你分配队伍</p>
+      <div class="avatar-upload" onclick="document.getElementById('fileInput').click()">
+        <span id="avatarIcon">🪖</span>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <input type="text" id="studentName" placeholder="输入你的昵称" maxlength="12">
+      <button class="btn green large" id="joinBtn" onclick="joinRoom()" disabled>⚔️ 加入战斗！</button>
     </div>
-    <input type="text" id="studentName" placeholder="输入你的昵称" maxlength="12">
-    <button class="btn green large" id="joinBtn" onclick="joinRoom()" disabled>⚔️ 加入战斗！</button>
-  </div>
-  <div class="hint-bar">
-    <span>正在等待主持人开始游戏</span>
-    <button class="link-btn" onclick="goHost()">🎮 主持人大屏</button>
-  </div>
-</div>
-
-<!-- ========== 主持人房间页 ========== -->
-<div class="panel hidden" id="hostPanel" style="max-width:600px;margin:20px auto">
-  <h2 style="text-align:center;color:var(--gold);margin-bottom:6px">🏠 主持人大屏</h2>
-  <p style="text-align:center;font-size:14px;color:#aaa;margin-bottom:10px">学生扫下方二维码即可加入，无需房间号</p>
-  <div class="room-code">加入二维码</div>
-  <div style="display:flex;justify-content:center"><div id="hostQrBox"></div></div>
-  <div class="qr-caption">用手机微信/浏览器扫码，上传头像昵称后自动分组</div>
-  <h3 style="margin:12px 0 6px">已加入玩家（<span id="playerCount">0</span>）</h3>
-  <div class="teams-preview" id="teamsPreview"></div>
-  <div class="player-list" id="hostPlayerList"></div>
-  <div style="text-align:center;margin-top:12px">
-    <button class="btn green large" id="startGameBtn" onclick="startGame()" disabled>⚔️ 开始战斗！</button>
-  </div>
-</div>
-
-<!-- ========== 学生等待大厅 ========== -->
-<div class="panel hidden" id="lobbyPanel" style="max-width:400px;margin:20px auto;text-align:center">
-  <div class="waiting-spinner"></div>
-  <h3>等待主持人开始游戏...</h3>
-  <div class="my-team" id="myTeamBox">
-    <span class="team-tag" id="myTeamName">我的队伍</span>
-    <div style="font-size:12px;color:#ccc;margin-top:6px" id="myTeamSkill"></div>
-    <div class="player-list" id="myTeamMembers" style="margin-top:8px"></div>
-  </div>
-  <p style="color:#aaa;font-size:13px;margin-top:8px">系统已自动为你分配队伍</p>
-</div>
-
-<!-- ========== 学生答题界面 ========== -->
-<div class="hidden" id="answerPanel">
-  <div class="question-card">
-    <p style="color:var(--gold);font-size:13px" id="qNum">第 1 题</p>
-    <p class="q-text" id="qText"></p>
-    <div id="optsBox"></div>
-    <div id="resultBox" style="display:none;margin-top:12px;padding:12px;border-radius:10px;font-size:14px"></div>
-  </div>
-</div>
-
-<!-- ========== 学生等待别人答题 ========== -->
-<div class="panel hidden waiting-screen" id="waitingPanel">
-  <div class="waiting-spinner"></div>
-  <h3 id="waitingText">等待中...</h3>
-  <p style="color:#aaa;margin-top:8px" id="waitingQNum"></p>
-</div>
-
-<!-- ========== 学生选目标 ========== -->
-<div class="hidden" id="targetPanel">
-  <div class="panel">
-    <h3 style="color:var(--green);margin-bottom:10px">🎯 选择攻击目标</h3>
-    <p style="font-size:13px;color:#aaa;margin-bottom:10px" id="skillHint"></p>
-    <div class="target-list" id="targetList"></div>
-  </div>
-</div>
-
-<!-- ========== 主持人战斗大屏 ========== -->
-<div class="hidden" id="hostBattlePanel" style="max-width:900px;margin:0 auto">
-  <h1 style="font-size:20px">⚔️ 战场实况 ⚔️</h1>
-  <div class="host-arena" id="hostTeams"></div>
-  <div class="hero-show" id="hostHeroShow">
-    <div class="big-av" id="hostBigAv">❓</div>
-    <div>
-      <h3 id="hostPlayerName">等待中</h3>
-      <p style="font-size:13px;color:#aaa" id="hostPlayerMeta"></p>
+    <div class="hint-bar">
+      <span>正在等待主持人开始游戏</span>
+      <button class="link-btn" onclick="goHost()">🎮 主持人大屏</button>
     </div>
   </div>
-  <div class="log-box" id="hostLog"></div>
-</div>
 
-<!-- ========== 结算 ========== -->
-<div class="panel hidden" id="resultPanel" style="max-width:500px;margin:20px auto">
-  <h2 style="text-align:center;font-size:24px;margin-bottom:6px">🏆 最终排名</h2>
-  <p style="text-align:center;color:var(--gold);margin-bottom:14px" id="championText"></p>
-  <div id="finalRanks"></div>
-  <div id="statsSection" style="display:none"></div>
-  <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center">
-    <button class="btn green" id="replayBtn" onclick="replay()">🔄 再来一局</button>
-    <button class="btn" onclick="location.reload()">返回首页</button>
+  <!-- ===== 主持人大厅 ===== -->
+  <div class="panel hidden" id="hostPanel" style="max-width:600px;margin:20px auto">
+    <h2 style="text-align:center;color:#ffd700;margin-bottom:6px">🏠 主持人大屏</h2>
+    <p style="text-align:center;font-size:14px;color:#aaa;margin-bottom:10px">学生扫下方二维码即可加入，无需房间号</p>
+    <div class="room-code">加入二维码</div>
+    <div style="display:flex;justify-content:center"><div id="hostQrBox"></div></div>
+    <div class="qr-caption">用手机微信/浏览器扫码，上传头像昵称后自动分组</div>
+    <h3 style="margin:12px 0 6px">已加入玩家（<span id="playerCount">0</span>）</h3>
+    <div class="teams-preview" id="teamsPreview"></div>
+    <div class="player-list" id="hostPlayerList"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn green large" id="startGameBtn" onclick="startGame()" disabled>⚔️ 开始战斗！</button>
+    </div>
   </div>
-</div>
 
-<div class="fx-overlay" id="fxOverlay"></div>
+  <!-- ===== 学生等待大厅 ===== -->
+  <div class="panel hidden" id="lobbyPanel" style="max-width:400px;margin:20px auto;text-align:center">
+    <div class="waiting-spinner"></div>
+    <h3>等待主持人开始游戏...</h3>
+    <div class="my-team" id="myTeamBox">
+      <span class="team-tag" id="myTeamName">我的队伍</span>
+      <div style="font-size:12px;color:#ccc;margin-top:6px" id="myTeamSkill"></div>
+      <div class="player-list" id="myTeamMembers" style="margin-top:8px"></div>
+    </div>
+    <p style="color:#aaa;font-size:13px;margin-top:8px">系统已自动为你分配队伍</p>
+  </div>
+
+  <!-- ===== 学生作答（同时作答） ===== -->
+  <div class="hidden" id="answerPanel">
+    <div class="panel">
+      <div class="team-strip" id="teamStrip"></div>
+      <div class="question-box">
+        <div class="question-num" id="qNum">第 1 题</div>
+        <div class="question-text" id="qText">加载中...</div>
+        <div class="options" id="optsBox"></div>
+        <div class="cd-wrap"><div class="cd-bar" id="cdBar"></div></div>
+        <div class="cd-num" id="cdNum"></div>
+        <div class="reveal" id="revealBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 主持人战斗大屏 ===== -->
+  <div class="hidden" id="hostBattlePanel" style="max-width:900px;margin:0 auto">
+    <h1 style="font-size:22px">⚔️ 战场实况 ⚔️</h1>
+    <div class="host-arena" id="hostArena"></div>
+    <div class="host-qbox">
+      <div class="question-num" id="hqNum">第 1 题</div>
+      <div class="question-text" id="hqText">等待出题...</div>
+      <div class="answered" id="hAnswered">已作答 0 人</div>
+      <div class="cd-wrap"><div class="cd-bar" id="hcdBar"></div></div>
+      <div class="cd-num" id="hcdNum"></div>
+    </div>
+    <div class="host-log" id="hostLog"></div>
+  </div>
+
+  <!-- ===== 结算 ===== -->
+  <div class="panel hidden" id="resultPanel" style="max-width:520px;margin:20px auto">
+    <h2 style="text-align:center;font-size:24px;margin-bottom:6px">🏆 最终排名</h2>
+    <div class="champion" id="championText"></div>
+    <div id="finalRanks"></div>
+    <div id="statsSection" style="display:none"></div>
+    <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center">
+      <button class="btn green" id="replayBtn" onclick="replay()">🔄 再来一局</button>
+      <button class="btn" onclick="location.reload()">返回首页</button>
+    </div>
+  </div>
+
+  <!-- ===== 特效层 ===== -->
+  <div id="fxOverlay" style="position:absolute;inset:0;pointer-events:none;z-index:20"></div>
+</div>
 
 <script>
-// 星空
-(function(){const s=document.getElementById('stars');for(let i=0;i<60;i++){const d=document.createElement('div');d.className='star';d.style.left=Math.random()*100+'%';d.style.top=Math.random()*100+'%';d.style.animationDelay=Math.random()*3+'s';s.appendChild(d);}})();
-
+// ===== 全局状态 =====
+const HOST_PASSWORD = '666';
 let ws = null;
-let myPlayerId = null;
-let myTeam = null; // {name,color,skill}
-let myPhoto = null;
 let isHost = false;
-
-const HOST = location.hostname;
-const WS_URL = (location.protocol==='https:'?'wss://':'ws://') + HOST + (location.port?':'+location.port:'');
+let myPlayerId = null;
+let myTeam = null;
+let myPhoto = null;
+let cdTimer = null;
+let cdEnd = 0;
 
 function connect() {
-  ws = new WebSocket(WS_URL);
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}`);
   ws.onopen = () => console.log('connected');
-  ws.onmessage = (e) => handleMsg(JSON.parse(e.data));
-  ws.onclose = () => {
-    document.body.innerHTML = '<div style="text-align:center;padding:60px;color:#ff6b6b">连接断开，请刷新页面重试</div>';
-  };
+  ws.onmessage = (e) => { try { handleMsg(JSON.parse(e.data)); } catch(err){} };
+  ws.onclose = () => { setTimeout(connect, 1500); };
 }
-function send(obj) { if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
-
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
 function show(id) {
-  ['joinPanel','hostPanel','lobbyPanel','answerPanel','waitingPanel','targetPanel','hostBattlePanel','resultPanel']
-    .forEach(p => document.getElementById(p).classList.add('hidden'));
-  if(id) document.getElementById(id).classList.remove('hidden');
+  ['joinPanel','hostPanel','lobbyPanel','answerPanel','hostBattlePanel','resultPanel'].forEach(p => {
+    const el = document.getElementById(p);
+    if (p === id) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  });
 }
 
-connect();
-
-// ====== 加入 ======
-document.getElementById('fileInput').addEventListener('change', function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    myPhoto = ev.target.result;
-    document.getElementById('avatarIcon').outerHTML = `<img id="avatarIcon" src="${myPhoto}" style="width:100%;height:100%;object-fit:cover">`;
-    checkJoinBtn();
+// ===== 加入 =====
+document.getElementById('fileInput').addEventListener('change', function(){
+  const f = this.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    myPhoto = r.result;
+    const box = document.querySelector('.avatar-upload');
+    box.innerHTML = `<img src="${myPhoto}">`;
+    document.getElementById('joinBtn').disabled = false;
   };
-  reader.readAsDataURL(file);
+  r.readAsDataURL(f);
 });
-document.getElementById('studentName').addEventListener('input', checkJoinBtn);
-function checkJoinBtn(){
-  document.getElementById('joinBtn').disabled = !document.getElementById('studentName').value.trim();
-}
+document.getElementById('studentName').addEventListener('input', function(){
+  document.getElementById('joinBtn').disabled = !(this.value.trim() && (myPhoto || true));
+});
 function joinRoom() {
   const name = document.getElementById('studentName').value.trim();
-  if(!name) return;
-  send({type:'join', name: name, photo: myPhoto});
+  if (!name) return;
+  send({ type:'join', name, photo: myPhoto });
 }
 
-// ====== 主持人 ======
+// ===== 主持人 =====
 function goHost() {
-  const pw = (prompt('请输入主持人密码：')||'').trim();
-  if(pw === '') return;
-  if(pw !== '666'){ alert('❌ 密码错误，无法进入主持人模式'); return; }
+  const pw = (prompt('请输入主持人密码：') || '').trim();
+  if (pw === '') return;
+  if (pw !== HOST_PASSWORD) { alert('❌ 密码错误，无法进入主持人模式'); return; }
   isHost = true;
-  send({type:'host_init', password: pw});
+  send({ type:'host_init', password: pw });
   renderQr();
   show('hostPanel');
 }
-function startGame() { send({type:'start_game'}); }
+function startGame() { send({ type:'start_game' }); }
+function replay() { if (isHost) send({ type:'reset_game' }); }
 
-// ====== 生成参与二维码（自动取当前部署地址，无需房间号） ======
 function renderQr() {
   const joinUrl = location.origin;
   const box = document.getElementById('hostQrBox');
   box.innerHTML = '';
-  QRCode.toCanvas(document.createElement('canvas'), joinUrl, {width:180, margin:1}, (err,c)=>{
-    if(!err) box.appendChild(c);
+  QRCode.toCanvas(document.createElement('canvas'), joinUrl, { width:180, margin:1 }, (err,c)=>{
+    if (!err) box.appendChild(c);
   });
 }
+document.addEventListener('visibilitychange', ()=>{ if (isHost) renderQr(); });
 
-// ====== 消息处理 ======
+// ===== 倒计时 =====
+function startCountdown(seconds, barId, numId) {
+  stopCountdown();
+  cdEnd = Date.now() + seconds * 1000;
+  cdTimer = setInterval(() => {
+    const remain = Math.max(0, (cdEnd - Date.now()) / 1000);
+    const bar = document.getElementById(barId), num = document.getElementById(numId);
+    if (bar) { bar.style.width = (remain / seconds * 100) + '%'; bar.classList.toggle('warn', remain <= 5); }
+    if (num) num.textContent = Math.ceil(remain);
+    if (remain <= 0) { stopCountdown(); if (num) num.textContent = '时间到'; }
+  }, 100);
+}
+function stopCountdown() { if (cdTimer) clearInterval(cdTimer); cdTimer = null; }
+
+// ===== 队伍血条条（学生作答顶部）=====
+function renderTeamStrip(teams) {
+  const box = document.getElementById('teamStrip');
+  box.innerHTML = (teams || []).map(t => `
+    <div class="mini-team" data-team="${t.idx}" style="border-color:${t.color}" data-hp="${t.hp}">
+      <div class="mt-name" style="color:${t.color}">${t.name} ${t.emoji||''}</div>
+      <div class="mt-hp"><i style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></i></div>
+    </div>`).join('');
+}
+
+// ===== 消息处理 =====
 function handleMsg(msg) {
-  switch(msg.type) {
+  switch (msg.type) {
+    case 'host_rejected':
+      isHost = false; show('joinPanel'); alert(msg.msg || '密码错误'); break;
+
     case 'lobby_update': {
-      // 主持人：渲染玩家与队伍预览
-      if(isHost) {
-        const players = msg.players;
-        document.getElementById('playerCount').textContent = players.length;
-        document.getElementById('hostPlayerList').innerHTML = players.map(p=>
-          `<div class="player-chip">${p.photo?`<img src="${p.photo}">`:''} ${escapeHtml(p.name)}</div>`
-        ).join('');
-        // 队伍预览
-        document.getElementById('teamsPreview').innerHTML = (msg.teams||[]).map(t=>
-          `<div class="team-prev" style="border-color:${t.color}"><b style="color:${t.color}">${t.name}</b><div class="cnt">${t.members.length} 人</div></div>`
-        ).join('');
-        // 主持人随时可开始：按钮始终可用（不再受人数限制）
+      if (isHost) {
+        document.getElementById('playerCount').textContent = msg.players.length;
+        document.getElementById('hostPlayerList').innerHTML = msg.players.map(p =>
+          `<div class="player-chip">${p.photo?`<img src="${p.photo}">`:''} ${esc(p.name)}</div>`).join('');
+        document.getElementById('teamsPreview').innerHTML = (msg.teams || []).map(t =>
+          `<div class="team-prev" style="border-color:${t.color}"><b style="color:${t.color}">${t.name}</b><div class="cnt">${t.members.length} 人</div></div>`).join('');
         document.getElementById('startGameBtn').disabled = msg.phase !== 'lobby';
         document.getElementById('startGameBtn').textContent = msg.phase === 'lobby' ? '⚔️ 开始战斗！' : '游戏中';
       }
-      // 学生：更新自己的队伍信息（分组是自动进行的，可随新成员加入变化）
-      if(!isHost && myPlayerId) {
-        const my = msg.players.find(p=>p.id===myPlayerId);
-        const team = (msg.teams||[]).find(t=>t.idx===my?.teamIdx);
-        if(team && myTeam!==team.name) {
-          myTeam = { name: team.name, color: team.color, skill: team.skill };
+      if (!isHost && myPlayerId) {
+        const my = msg.players.find(p => p.id === myPlayerId);
+        const team = (msg.teams || []).find(t => t.idx === my?.teamIdx);
+        if (team && myTeam !== team.name) {
+          myTeam = { name: team.name, color: team.color, skill: team.skill, emoji: team.skill.emoji };
           document.getElementById('myTeamName').textContent = team.name;
           document.getElementById('myTeamName').style.color = team.color;
           document.getElementById('myTeamBox').style.borderColor = team.color;
           document.getElementById('myTeamSkill').textContent = `队伍技能: ${team.skill.emoji} ${team.skill.name}`;
-          document.getElementById('myTeamMembers').innerHTML = team.members.map(m=>
-            `<div class="player-chip" style="border:1px solid ${team.color}">${m.photo?`<img src="${m.photo}">`:''} ${escapeHtml(m.name)}</div>`
-          ).join('');
+          document.getElementById('myTeamMembers').innerHTML = team.members.map(m =>
+            `<div class="player-chip" style="border:1px solid ${team.color}">${m.photo?`<img src="${m.photo}">`:''} ${esc(m.name)}</div>`).join('');
         }
       }
       break;
     }
 
-    case 'joined': {
+    case 'joined':
       myPlayerId = msg.playerId;
       myTeam = msg.team;
       document.getElementById('myTeamName').textContent = msg.team.name;
@@ -344,47 +391,24 @@ function handleMsg(msg) {
       document.getElementById('myTeamSkill').textContent = `队伍技能: ${msg.team.skill.emoji} ${msg.team.skill.name}`;
       show('lobbyPanel');
       break;
-    }
 
     case 'game_started':
-      // 不主动切界面，首个作答者会收到 your_turn，其余收到 waiting
+      if (isHost) show('hostBattlePanel');
+      break;
+
+    // ===== 同步作答回合：全员同一题 =====
+    case 'round_question':
+      if (!isHost) showQuestion(msg);
+      else { show('hostBattlePanel'); renderHostQuestion(msg); }
+      break;
+
+    case 'round_result':
+      if (!isHost) revealRound(msg);
+      else renderHostResolve(msg);
       break;
 
     case 'state_update':
-      if(isHost) renderHostState(msg);
-      break;
-
-    case 'your_turn':
-      if(!isHost) showQuestion(msg);
-      break;
-
-    case 'waiting':
-      if(!isHost) {
-        show('waitingPanel');
-        document.getElementById('waitingText').textContent = `等待 ${msg.playerName} 作答...`;
-        document.getElementById('waitingQNum').textContent = `第 ${msg.qNum} 题 · ${msg.teamName||''}`;
-      }
-      break;
-
-    case 'answer_result':
-      showAnswerResult(msg);
-      break;
-
-    case 'select_target':
-      showTargetSelect(msg);
-      break;
-
-    case 'target_result':
-      showTargetResult(msg);
-      break;
-
-    case 'skill_cast':
-      playSkillFX(msg.skill);
-      break;
-
-    case 'damage_taken':
-      document.body.classList.add('fx-shake');
-      setTimeout(()=>document.body.classList.remove('fx-shake'),500);
+      if (isHost) renderHostState(msg);
       break;
 
     case 'game_end':
@@ -392,183 +416,239 @@ function handleMsg(msg) {
       break;
 
     case 'answer_stats':
-      if(isHost) renderStats(msg.stats);
+      if (isHost) renderStats(msg.stats);
       break;
 
     case 'game_reset':
-      // 主持人"再来一局"后：主持人回大厅，学生回等待大厅，可继续开战
-      if(isHost) show('hostPanel');
+      stopCountdown();
+      if (isHost) show('hostPanel');
       else show('lobbyPanel');
       break;
-
-    case 'error':
-      alert(msg.msg);
-      break;
   }
 }
 
-// ====== 主持人渲染 ======
-function renderHostState(s) {
-  if(s.phase === 'lobby') { show('hostPanel'); return; }   // 未开始：留在主持人大厅
-  if(s.phase === 'ended') return;                            // 已结束：保持结算页不动
-  show('hostBattlePanel');                                   // 对局中：切到战场实况
-  const row = document.getElementById('hostTeams');
-  row.innerHTML = '';
-  s.teams.forEach((t,i)=>{
-    const div = document.createElement('div');
-    div.className = 'host-team' + (t.alive?'':' dead') + (s.currentPlayer && s.currentPlayer.teamIdx===i?' active':'');
-    div.style.borderColor = t.color;
-    const avs = t.members.map(m=>
-      `<div class="mini-av" title="${escapeHtml(m.name)}">${m.photo?`<img src="${m.photo}">`:m.skill.emoji}</div>`
-    ).join('');
-    div.innerHTML = `
-      <div style="font-weight:bold;color:${t.color};font-size:13px">${t.name} ${t.skill.emoji}</div>
-      <div class="host-team-hp"><div style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></div><span>${t.hp}</span></div>
-      <div class="host-team-members">${avs}</div>
-    `;
-    row.appendChild(div);
-  });
-  if(s.currentPlayer) {
-    document.getElementById('hostBigAv').innerHTML = s.currentPlayer.photo ? `<img src="${s.currentPlayer.photo}">` : '❓';
-    document.getElementById('hostPlayerName').textContent = s.currentPlayer.name;
-    document.getElementById('hostPlayerMeta').textContent = `第 ${s.currentPlayer.qNum} 题 · 技能: ${s.currentPlayer.skill.emoji} ${s.currentPlayer.skill.name}`;
-  }
-  document.getElementById('hostLog').innerHTML = s.log.map(l=>
-    `<p style="color:${l.type==='hero'?'#5dade2':l.type==='bad'?'#ec7063':l.type==='skill'?'#bb8fce':'#f7dc6f'}">${l.text}</p>`
-  ).join('');
-  const log = document.getElementById('hostLog');
-  log.scrollTop = log.scrollHeight;
-}
-
-// ====== 学生答题 ======
+// ===== 学生作答 =====
 function showQuestion(msg) {
   show('answerPanel');
-  document.getElementById('qNum').textContent = `第 ${msg.qNum} 题 · 你的技能: ${msg.skill.emoji} ${msg.skill.name} · ${msg.teamName}`;
+  stopCountdown();
+  document.getElementById('qNum').textContent = `第 ${msg.qNum} 题`;
   document.getElementById('qText').textContent = msg.question;
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
-  msg.options.forEach(opt=>{
+  msg.options.forEach((opt, i) => {
     const b = document.createElement('button');
-    b.className='opt-btn'; b.textContent=opt;
-    b.onclick = ()=>{
-      box.querySelectorAll('button').forEach(x=>x.disabled=true);
-      send({type:'answer', choice: opt});
-    };
+    b.className = 'option-btn';
+    b.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    b.dataset.idx = i;
+    b.onclick = () => { if (b.classList.contains('locked')) return; lockIn(i, box); };
     box.appendChild(b);
   });
-  document.getElementById('resultBox').style.display = 'none';
+  document.getElementById('revealBox').className = 'reveal';
+  document.getElementById('revealBox').innerHTML = '';
+  renderTeamStrip([]);
+  startCountdown(msg.roundTime, 'cdBar', 'cdNum');
 }
-
-function showAnswerResult(msg) {
-  const box = document.getElementById('resultBox');
-  box.style.display = 'block';
-  if(msg.correct) {
-    box.style.background = 'rgba(46,204,113,.15)';
-    box.style.borderLeft = '3px solid #2ecc71';
-    box.innerHTML = `✅ 答对了！释放技能！<br>${msg.explain}`;
-  } else {
-    box.style.background = 'rgba(231,76,60,.15)';
-    box.style.borderLeft = '3px solid #e74c3c';
-    box.innerHTML = `❌ 答错了！正确答案: <b>${msg.answer}</b><br>${msg.explain}<br>💥 全队受到 ${msg.damage} 点伤害`;
+function lockIn(idx, box) {
+  box.querySelectorAll('.option-btn').forEach(b => b.classList.add('locked'));
+  box.querySelectorAll('.option-btn')[idx].classList.add('chosen');
+  send({ type:'answer', choice: box.querySelectorAll('.option-btn')[idx].textContent.slice(3).trim() });
+}
+function revealRound(msg) {
+  stopCountdown();
+  // 队伍血条更新
+  const strip = document.getElementById('teamStrip');
+  strip.innerHTML = (msg.teams || []).map(t =>
+    `<div class="mini-team ${t.alive?'':'dying'}" style="border-color:${t.color}">
+      <div class="mt-name" style="color:${t.color}">${t.name}</div>
+      <div class="mt-hp"><i style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></i></div>
+    </div>`).join('');
+  // 高亮正确/错误选项
+  const btns = document.querySelectorAll('#optsBox .option-btn');
+  btns.forEach(b => {
+    if (b.textContent.slice(3).trim() === msg.answer) b.classList.add('correct');
+    else if (parseInt(b.dataset.idx) === msg.choiceIdx) b.classList.add('wrong');
+  });
+  // 揭晓
+  const rb = document.getElementById('revealBox');
+  rb.className = 'reveal ' + (msg.correct ? 'right show' : 'wrong show');
+  let txt = msg.correct ? `✅ 答对了！` : `❌ 答错了！正确答案：<b>${msg.answer}</b>`;
+  txt += `<br>${msg.explain}`;
+  // 我所在队伍的战斗事件
+  if (msg.events && msg.events.length) {
+    const myIdx = myTeam ? null : null;
+    const myEvent = msg.events.find(e => e.toTeam === myTeam?.idx || e.fromTeam === myTeam?.idx);
+    const iAm = (myTeam && msg.teams && msg.teams.find(t => t.name === myTeam.name));
+    if (iAm) {
+      const involved = msg.events.filter(e => e.fromTeam === iAm.idx || e.toTeam === iAm.idx);
+      if (involved.length) {
+        const last = involved[involved.length - 1];
+        if (last.fromTeam === iAm.idx) txt += `<br>🔥 你的队伍释放技能，攻击了 <b style="color:${last.toColor}">${last.toName}</b>（-${last.damage} HP）`;
+        else txt += `<br>💥 你的队伍被 <b style="color:${last.fromColor}">${last.fromName}</b> 攻击，受到 ${last.damage} 伤害`;
+      }
+    }
+  }
+  rb.innerHTML = txt;
+  // 我的队伍受击抖动
+  if (msg.teams && myTeam) {
+    const myEl = document.querySelector(`.mini-team[data-team]`) ;
+    const idx = msg.teams.findIndex(t => t.name === myTeam.name);
+    if (idx >= 0) {
+      const el = document.querySelectorAll('.mini-team')[idx];
+      if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+    }
   }
 }
 
-function showTargetSelect(m) {
-  show('targetPanel');
-  document.getElementById('skillHint').textContent = '选择一支敌方队伍释放技能攻击';
-  const list = document.getElementById('targetList');
-  list.innerHTML = '';
-  m.teams.forEach(t=>{
-    const div = document.createElement('div');
-    div.className = 'target-item';
-    div.style.borderColor = t.color;
-    div.innerHTML = `<div><b style="color:${t.color}">${t.name}</b></div><div>HP: ${t.hp}</div>`;
-    div.onclick = ()=> send({type:'select_target', targetTeamIdx: t.idx});
-    list.appendChild(div);
+// ===== 主持人：题目与战场 =====
+function renderHostQuestion(msg) {
+  document.getElementById('hqNum').textContent = `第 ${msg.qNum} 题`;
+  document.getElementById('hqText').textContent = msg.question;
+  document.getElementById('hAnswered').textContent = '正在作答...';
+  startCountdown(msg.roundTime, 'hcdBar', 'hcdNum');
+}
+function renderHostState(s) {
+  if (s.phase === 'lobby') { show('hostPanel'); return; }
+  if (s.phase === 'ended') return;
+  show('hostBattlePanel');
+  const row = document.getElementById('hostArena');
+  row.innerHTML = (s.teams || []).map((t, i) =>
+    `<div class="host-team ${t.alive?'':'dead'}" data-team="${t.idx}" style="border-color:${t.color}">
+      <span class="big-emoji">${t.skill.emoji}</span>
+      <div class="ht-name" style="color:${t.color}">${t.name}</div>
+      <div class="host-hp"><i style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></i><span>${t.hp}</span></div>
+      <div class="host-members">${t.members.map(m=>m.photo?`<img src="${m.photo}" title="${esc(m.name)}">`:`<span class="mini-av" title="${esc(m.name)}">${m.skill?m.skill.emoji:'?'}</span>`).join('')}</div>
+    </div>`).join('');
+  if (s.currentQuestion) {
+    document.getElementById('hqNum').textContent = `第 ${s.currentQuestion.qNum} 题`;
+    document.getElementById('hqText').textContent = s.currentQuestion.q;
+    document.getElementById('hAnswered').textContent = `已作答 ${s.answered} 人`;
+  }
+  renderHostLog(s.log);
+}
+function renderHostResolve(msg) {
+  stopCountdown();
+  // 重绘血条
+  const row = document.getElementById('hostArena');
+  if (row.querySelector('.host-team')) {
+    row.querySelectorAll('.host-team').forEach(el => {
+      const t = (msg.teams || []).find(x => x.idx === parseInt(el.dataset.team));
+      if (t) {
+        el.classList.toggle('dead', !t.alive);
+        el.querySelector('.host-hp i').style.width = Math.max(0, t.hp / 300 * 100) + '%';
+        el.querySelector('.host-hp span').textContent = t.hp;
+      }
+    });
+    // 技能飞行 + 受击动画
+    (msg.events || []).forEach(e => {
+      const fromEl = row.querySelector(`.host-team[data-team="${e.fromTeam}"]`);
+      const toEl = row.querySelector(`.host-team[data-team="${e.toTeam}"]`);
+      if (fromEl && toEl) {
+        flySkill(fromEl, toEl, e.fromEmoji, e.fromColor, e.damage);
+        toEl.classList.remove('hit'); void toEl.offsetWidth; toEl.classList.add('hit');
+        fromEl.classList.remove('attacker'); void fromEl.offsetWidth; fromEl.classList.add('attacker');
+      }
+    });
+  }
+  renderHostLog(msg.log || []);
+}
+function renderHostLog(log) {
+  const el = document.getElementById('hostLog');
+  el.innerHTML = (log || []).map(l =>
+    `<p style="color:${l.type==='hero'?'#5dade2':l.type==='bad'?'#ec7063':l.type==='skill'?'#bb8fce':'#f7dc6f'}">${l.text}</p>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ===== 特效：技能飞行 =====
+function flySkill(fromEl, toEl, emoji, color, dmg) {
+  const arena = document.getElementById('hostArena');
+  const arenaRect = arena.getBoundingClientRect();
+  const f = document.createElement('div');
+  f.className = 'fly-emoji'; f.textContent = emoji;
+  const s = fromEl.getBoundingClientRect();
+  f.style.left = (s.left - arenaRect.left + s.width / 2 - 20) + 'px';
+  f.style.top = (s.top - arenaRect.top + s.height / 2 - 20) + 'px';
+  arena.appendChild(f);
+  const d = document.createElement('div');
+  d.className = 'dmg-num'; d.textContent = '-' + dmg;
+  const t = toEl.getBoundingClientRect();
+  d.style.left = (t.left - arenaRect.left + t.width / 2 - 20) + 'px';
+  d.style.top = (t.top - arenaRect.top + 4) + 'px';
+  arena.appendChild(d);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const e = toEl.getBoundingClientRect();
+      f.style.transition = 'left .6s ease-in, top .6s ease-in, transform .6s ease-in';
+      f.style.left = (e.left - arenaRect.left + e.width / 2 - 20) + 'px';
+      f.style.top = (e.top - arenaRect.top + e.height / 2 - 20) + 'px';
+      f.style.transform = 'scale(1.6)';
+    });
   });
+  setTimeout(() => { f.remove(); d.remove(); }, 900);
 }
 
-function showTargetResult(msg) {
-  document.getElementById('targetPanel').classList.add('hidden');
-  show('waitingPanel');
-  document.getElementById('waitingText').textContent = `你对 ${msg.targetName} 造成了 ${msg.damage} 点伤害！`;
-}
-
-// ====== 特效 ======
-function playSkillFX(skill) {
-  const overlay = document.getElementById('fxOverlay');
-  overlay.innerHTML = '';
-  const icon = document.createElement('div');
-  icon.className = 'fx-skill'; icon.textContent = skill.emoji; icon.style.color = skill.color;
-  overlay.appendChild(icon);
-  setTimeout(()=>{
-    const t = document.createElement('div');
-    t.className='fx-text'; t.textContent = skill.name; t.style.color = skill.color;
-    overlay.appendChild(t);
-  },200);
-  document.body.classList.add('fx-shake');
-  setTimeout(()=>{overlay.innerHTML='';document.body.classList.remove('fx-shake');},1400);
-}
-
-// ====== 结算 ======
+// ===== 结算 =====
 function showResult(msg) {
   show('resultPanel');
+  confetti();
   const ranks = msg.ranking;
   document.getElementById('championText').textContent = `👑 ${ranks[0].name} 获得总冠军！`;
   const box = document.getElementById('finalRanks');
-  box.innerHTML = '';
-  box.innerHTML += '<p style="text-align:center;color:var(--gold);margin:10px 0">🏆 全场前五名</p>';
-  ranks.slice(0,5).forEach((r,i)=>{
+  box.innerHTML = '<p style="text-align:center;color:#ffd700;margin:10px 0">🏆 全场前五名</p>';
+  ranks.slice(0, 5).forEach((r, i) => {
     const medal = ['🥇','🥈','🥉','4️⃣','5️⃣'][i];
     const div = document.createElement('div');
-    div.className = 'rank-item r'+(i+1);
+    div.className = 'rank-item r' + (i + 1);
     div.innerHTML = `
       <div class="rank-medal">${medal}</div>
       <div class="rank-avatar">${r.photo?`<img src="${r.photo}">`:'❓'}</div>
       <div class="rank-info">
-        <div class="rn">${escapeHtml(r.name)}</div>
+        <div class="rn">${esc(r.name)}</div>
         <div class="rd">${r.teamName} · ${r.skill.emoji}${r.skill.name} · 答对${r.correct}/${r.total}</div>
       </div>
-      <div class="rank-score">${r.score}</div>
-    `;
+      <div class="rank-score">${r.score}</div>`;
     box.appendChild(div);
   });
-  // 只有主持人显示"再来一局"；学生等待主持人开启下一局
   document.getElementById('replayBtn').style.display = isHost ? 'inline-block' : 'none';
 }
-
-function replay() {
-  if(isHost) send({type:'reset_game'});
-}
-
-// ====== 主持人：错题回顾（哪些题错得多 / 哪些选项错得多） ======
 function renderStats(stats) {
   const sec = document.getElementById('statsSection');
-  const bad = stats.filter(s=>s.wrong>0);
+  const bad = stats.filter(s => s.wrong > 0);
   sec.style.display = 'block';
-  if(bad.length===0){
-    sec.innerHTML = '<div class="stat-block"><b>📊 错题回顾</b><div class="stat-none">本局全员全对，无错题 🎉</div></div>';
-    return;
-  }
+  if (!bad.length) { sec.innerHTML = '<div class="stat-block"><b>📊 错题回顾</b><div class="stat-none">本局全员全对，无错题 🎉</div></div>'; return; }
   let html = '<div class="stat-block"><b>📊 错题回顾（按答错次数排序）</b>';
-  bad.slice(0,10).forEach(s=>{
+  bad.slice(0, 10).forEach(s => {
     const wrongOpts = s.wrongList.length
-      ? s.wrongList.map(w=>`<span class="stat-opt">选项${String.fromCharCode(65+w.idx)} 错选${w.count}次</span>`).join('')
+      ? s.wrongList.map(w => `<span class="stat-opt">选项${String.fromCharCode(65 + w.idx)} 错选${w.count}次</span>`).join('')
       : '';
     html += `<div class="stat-item">
       <div class="stat-q">第${s.qNum}题 · 答错 <b style="color:#e74c3c">${s.wrong}</b> 次（答对${s.correct}/${s.asked}）</div>
-      <div class="stat-t">${escapeHtml(s.q)}</div>
+      <div class="stat-t">${esc(s.q)}</div>
       ${wrongOpts?`<div class="stat-opts">${wrongOpts}</div>`:''}
     </div>`;
   });
   html += '</div>';
   sec.innerHTML = html;
 }
+function confetti() {
+  const colors = ['#ffd700','#ff6b6b','#2ecc71','#3498db','#ff7f50','#9b59b6'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    c.style.animationDelay = Math.random() * 1.2 + 's';
+    c.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 5000);
+  }
+}
 
-function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// ===== 工具 =====
+function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// 主持人进入后生成二维码
-document.addEventListener('visibilitychange', ()=>{ if(isHost) renderQr(); });
+// ===== 启动 =====
+connect();
 </script>
 </body>
 </html>
