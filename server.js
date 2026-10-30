@@ -11,6 +11,7 @@ const { QUESTIONS } = require('./questions');
 
 const PORT = parseInt(process.env.PORT) || 3000;
 const TEAM_SIZE = parseInt(process.env.TEAM_SIZE) || 5; // 每队人数上限（默认4~5人一组），可配
+const HOST_PASSWORD = process.env.HOST_PASSWORD || '666'; // 进入主持人模式的密码，可配
 
 // ---------- 静态文件托管 ----------
 const MIME = {
@@ -238,6 +239,11 @@ function endGame() {
 function handleMsg(ws, msg) {
   switch (msg.type) {
     case 'host_init': {
+      // 校验主持人密码，防止学生误入/绕过
+      if (msg.password !== HOST_PASSWORD) {
+        sendTo(ws.__id, { type: 'host_rejected', msg: '密码错误，无法进入主持人模式' });
+        return;
+      }
       state.hostId = ws.__id;
       sendHost(lobbyUpdate());
       sendHost(hostState());

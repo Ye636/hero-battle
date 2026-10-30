@@ -278,8 +278,11 @@ function joinRoom() {
 
 // ====== 主持人 ======
 function goHost() {
+  const pw = (prompt('请输入主持人密码：')||'').trim();
+  if(pw === '') return;
+  if(pw !== '666'){ alert('❌ 密码错误，无法进入主持人模式'); return; }
   isHost = true;
-  send({type:'host_init'});
+  send({type:'host_init', password: pw});
   renderQr();
   show('hostPanel');
 }
