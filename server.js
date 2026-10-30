@@ -354,7 +354,7 @@ wss.on('connection', (ws) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`⚔️  英雄知识大乱斗已启动: http://localhost:${PORT}`);
-  console.log(`    每队人数上限: ${TEAM_SIZE}（可用环境变量 TEAM_SIZE 修改）`);
-  console.log(`    题库题目数: ${QUESTIONS.length}`);
+  console.log(`[Hero Battle] Server running at http://localhost:${PORT}`);
+  console.log(`  Team size cap : ${TEAM_SIZE} (override with env TEAM_SIZE)`);
+  console.log(`  Question count: ${QUESTIONS.length}`);
 });
