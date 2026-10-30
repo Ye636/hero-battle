@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>参与二维码生成器</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#1a0a2e,#0a0a1a);min-height:100vh;color:#fff;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:28px;text-align:center;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+h1{font-size:20px;margin-bottom:16px;color:#ffd700}
+p{font-size:13px;color:#bbb;margin-bottom:14px;line-height:1.6}
+input{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;font-size:15px;text-align:center;margin-bottom:14px}
+button{padding:12px 28px;border:none;border-radius:30px;cursor:pointer;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;font-weight:bold;font-size:15px;box-shadow:0 4px 15px rgba(46,204,113,.4)}
+button:hover{transform:translateY(-2px)}
+#qrBox{background:#fff;padding:14px;border-radius:14px;margin:20px auto 0;display:none;width:fit-content}
+a.dl{display:inline-block;margin-top:14px;color:#ffd700;text-decoration:underline;font-size:14px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔗 参与二维码生成器</h1>
+  <p>把游戏部署到公网后，将得到的网址填入下方，即可生成"扫码即参与"的二维码。<br>把二维码投影到大屏或打印出来，学生扫码→上传头像昵称→自动分组→加入战斗。</p>
+  <input type="text" id="url" placeholder="例如 https://hero-battle.onrender.com" value="">
+  <button onclick="make()">生成二维码</button>
+  <div id="qrBox"></div>
+  <a class="dl" id="download" style="display:none">下载二维码图片</a>
+</div>
+<script>
+function make(){
+  const url = document.getElementById('url').value.trim();
+  const box = document.getElementById('qrBox');
+  if(!url){ alert('请输入部署后的网址'); return; }
+  box.innerHTML='';
+  const c = document.createElement('canvas');
+  QRCode.toCanvas(c, url, {width:260, margin:1}, (err)=>{
+    if(err){ alert('生成失败'); return; }
+    box.appendChild(c);
+    box.style.display='block';
+    const dl = document.getElementById('download');
+    dl.href = c.toDataURL('image/png');
+    dl.download = '参与二维码.png';
+    dl.style.display='inline-block';
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "hero-battle",
+  "version": "1.0.0",
+  "description": "英雄知识大乱斗 —— 学生扫码直接加入、上传头像昵称后自动分组、回合制答题对战",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
