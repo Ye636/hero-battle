@@ -10,7 +10,7 @@ const { WebSocketServer } = require('ws');
 const { QUESTIONS } = require('./questions');
 
 const PORT = parseInt(process.env.PORT) || 3000;
-const TEAM_SIZE = parseInt(process.env.TEAM_SIZE) || 3; // 每队人数上限，可配
+const TEAM_SIZE = parseInt(process.env.TEAM_SIZE) || 5; // 每队人数上限（默认4~5人一组），可配
 
 // ---------- 静态文件托管 ----------
 const MIME = {
@@ -253,7 +253,8 @@ function handleMsg(ws, msg) {
     case 'start_game': {
       if (ws.__id !== state.hostId) { sendTo(ws.__id, { type: 'error', msg: '只有主持人能开始游戏' }); return; }
       if (state.phase !== 'lobby') return;
-      if (state.players.length < 2) { sendTo(ws.__id, { type: 'error', msg: '至少需要 2 名玩家才能开始' }); return; }
+      // 主持人随时可开始：只要有玩家在场即可（人数不足时仍可开始）
+      if (state.players.length < 1) { sendTo(ws.__id, { type: 'error', msg: '还没有玩家加入，稍等片刻' }); return; }
       state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
       state.phase = 'playing';
       state.qNum = 0;
@@ -262,6 +263,8 @@ function handleMsg(ws, msg) {
       state.log.push({ text: '⚔️ 战斗开始！', type: 'skill' });
       broadcast({ type: 'game_started' });
       broadcast(lobbyUpdate());
+      // 若存活队伍不足 2 支（如只有 1 人/1 队），直接结束，该队即为冠军
+      if (aliveTeams().length < 2) { endGame(); return; }
       advanceTurn();
       break;
     }

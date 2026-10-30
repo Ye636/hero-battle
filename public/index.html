@@ -298,10 +298,9 @@ function handleMsg(msg) {
         document.getElementById('teamsPreview').innerHTML = (msg.teams||[]).map(t=>
           `<div class="team-prev" style="border-color:${t.color}"><b style="color:${t.color}">${t.name}</b><div class="cnt">${t.members.length} 人</div></div>`
         ).join('');
-        const ready = players.length>=2 && msg.phase==='lobby';
-        document.getElementById('startGameBtn').disabled = !ready;
-        if(!ready) document.getElementById('startGameBtn').textContent = players.length<2 ? `还需 ${2-players.length} 人加入` : '⚔️ 开始战斗！';
-        else document.getElementById('startGameBtn').textContent = '⚔️ 开始战斗！';
+        // 主持人随时可开始：按钮始终可用（不再受人数限制）
+        document.getElementById('startGameBtn').disabled = msg.phase !== 'lobby';
+        document.getElementById('startGameBtn').textContent = msg.phase === 'lobby' ? '⚔️ 开始战斗！' : '游戏中';
       }
       // 学生：更新自己的队伍信息（分组是自动进行的，可随新成员加入变化）
       if(!isHost && myPlayerId) {
