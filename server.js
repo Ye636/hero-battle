@@ -74,7 +74,8 @@ const state = {
   curIdx: 0,       // 当前回合玩家在 players 中的下标
   qNum: 0,
   log: [],
-  waiting: null    // 'answer' | 'target' | null
+  waiting: null,  // 'answer' | 'target' | null
+  stats: {}       // 错题统计：qNum -> { qNum, q, asked, correct, wrongOptions }
 };
 
 // ---------- 辅助 ----------
@@ -168,6 +169,7 @@ function advanceTurn() {
   const next = nextAlivePlayerIndex(state.curIdx);
   if (next === -1) { endGame(); return; }
   state.curIdx = next;
+  state.qNum++; // 每回合推进到下一题（start_game 时 qNum 置 -1，故首题为第 1 题）
   const p = currentPlayer();
   const t = teamOf(p);
   const q = QUESTIONS[state.qNum % QUESTIONS.length];
@@ -202,6 +204,21 @@ function checkEnd() {
   return false;
 }
 
+// 汇总错题统计（按答错次数从高到低）
+function buildStats() {
+  return Object.values(state.stats)
+    .map(s => {
+      const wrong = s.asked - s.correct;
+      return {
+        qNum: s.qNum, q: s.q, asked: s.asked, correct: s.correct, wrong,
+        wrongList: Object.keys(s.wrongOptions)
+          .map(k => ({ idx: +k, count: s.wrongOptions[k] }))
+          .sort((a, b) => b.count - a.count)
+      };
+    })
+    .sort((a, b) => b.wrong - a.wrong);
+}
+
 function endGame() {
   state.phase = 'ended';
   state.waiting = null;
@@ -213,6 +230,7 @@ function endGame() {
       teamName: teamOf(p) ? teamOf(p).name : '', skill: p.skill
     }));
   broadcast({ type: 'game_end', ranking });
+  sendHost({ type: 'answer_stats', stats: buildStats() });
   sendHost(hostState());
 }
 
@@ -257,9 +275,10 @@ function handleMsg(ws, msg) {
       if (state.players.length < 1) { sendTo(ws.__id, { type: 'error', msg: '还没有玩家加入，稍等片刻' }); return; }
       state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
       state.phase = 'playing';
-      state.qNum = 0;
+      state.qNum = -1; // 首题为第 1 题
       state.curIdx = 0;
       state.log = [];
+      state.stats = {};
       state.log.push({ text: '⚔️ 战斗开始！', type: 'skill' });
       broadcast({ type: 'game_started' });
       broadcast(lobbyUpdate());
@@ -276,8 +295,15 @@ function handleMsg(ws, msg) {
       const q = QUESTIONS[state.qNum % QUESTIONS.length];
       const t = teamOf(p);
       p.total++;
+      const chosenIdx = q.options.indexOf(msg.choice);
       const correct = q.options[q.answer] === msg.choice;
+      // 错题统计：记录每题答错次数与具体错误选项
+      const st = (state.stats[state.qNum] = state.stats[state.qNum] || {
+        qNum: state.qNum + 1, q: q.q, asked: 0, correct: 0, wrongOptions: {}
+      });
+      st.asked++;
       if (correct) {
+        st.correct++;
         p.correct++;
         p.score += 100;
         state.log.push({ text: `✅ ${p.name} 答对！释放技能 ${p.skill.emoji} ${p.skill.name}`, type: 'hero' });
@@ -289,6 +315,7 @@ function handleMsg(ws, msg) {
         sendTo(p.id, { type: 'select_target', teams: targets });
         sendHost(hostState());
       } else {
+        if (chosenIdx >= 0) st.wrongOptions[chosenIdx] = (st.wrongOptions[chosenIdx] || 0) + 1;
         const dmg = 25;
         state.log.push({ text: `❌ ${p.name} 答错，${t ? t.name : ''}全队受到 ${dmg} 伤害`, type: 'bad' });
         if (t) damageTeam(t, dmg, '');
@@ -326,8 +353,9 @@ function handleMsg(ws, msg) {
       state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
       state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; });
       state.curIdx = 0;
-      state.qNum = 0;
+      state.qNum = -1; // 首题为第 1 题
       state.log = [];
+      state.stats = {};
       state.waiting = null;
       broadcast({ type: 'game_reset' });
       broadcast(lobbyUpdate());

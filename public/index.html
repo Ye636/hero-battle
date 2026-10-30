@@ -83,6 +83,16 @@ input:focus{outline:none;border-color:var(--gold)}
 .rank-info .rd{font-size:12px;color:#999}
 .rank-score{font-size:18px;font-weight:bold;color:var(--gold)}
 
+/* 错题回顾（主持人结算页） */
+.stat-block{background:rgba(255,255,255,.06);border-radius:12px;padding:14px;margin-top:14px}
+.stat-block b{color:var(--gold);display:block;margin-bottom:8px}
+.stat-none{color:#999;font-size:13px;padding:6px 0}
+.stat-item{border-left:3px solid #e74c3c;background:rgba(231,76,60,.08);border-radius:8px;padding:8px 12px;margin:6px 0}
+.stat-q{font-size:13px;color:#eee;font-weight:bold}
+.stat-t{font-size:13px;color:#bbb;margin:3px 0}
+.stat-opts{display:flex;gap:6px;flex-wrap:wrap}
+.stat-opt{font-size:11px;background:#e74c3c;color:#fff;border-radius:20px;padding:2px 9px}
+
 /* 主持人战斗大屏 */
 #hostBattlePanel{max-width:900px;margin:0 auto}
 .host-arena{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:10px 0}
@@ -204,6 +214,7 @@ input:focus{outline:none;border-color:var(--gold)}
   <h2 style="text-align:center;font-size:24px;margin-bottom:6px">🏆 最终排名</h2>
   <p style="text-align:center;color:var(--gold);margin-bottom:14px" id="championText"></p>
   <div id="finalRanks"></div>
+  <div id="statsSection" style="display:none"></div>
   <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center">
     <button class="btn green" id="replayBtn" onclick="replay()">🔄 再来一局</button>
     <button class="btn" onclick="location.reload()">返回首页</button>
@@ -377,6 +388,10 @@ function handleMsg(msg) {
       showResult(msg);
       break;
 
+    case 'answer_stats':
+      if(isHost) renderStats(msg.stats);
+      break;
+
     case 'game_reset':
       // 主持人"再来一局"后：主持人回大厅，学生回等待大厅，可继续开战
       if(isHost) show('hostPanel');
@@ -519,6 +534,30 @@ function showResult(msg) {
 
 function replay() {
   if(isHost) send({type:'reset_game'});
+}
+
+// ====== 主持人：错题回顾（哪些题错得多 / 哪些选项错得多） ======
+function renderStats(stats) {
+  const sec = document.getElementById('statsSection');
+  const bad = stats.filter(s=>s.wrong>0);
+  sec.style.display = 'block';
+  if(bad.length===0){
+    sec.innerHTML = '<div class="stat-block"><b>📊 错题回顾</b><div class="stat-none">本局全员全对，无错题 🎉</div></div>';
+    return;
+  }
+  let html = '<div class="stat-block"><b>📊 错题回顾（按答错次数排序）</b>';
+  bad.slice(0,10).forEach(s=>{
+    const wrongOpts = s.wrongList.length
+      ? s.wrongList.map(w=>`<span class="stat-opt">选项${String.fromCharCode(65+w.idx)} 错选${w.count}次</span>`).join('')
+      : '';
+    html += `<div class="stat-item">
+      <div class="stat-q">第${s.qNum}题 · 答错 <b style="color:#e74c3c">${s.wrong}</b> 次（答对${s.correct}/${s.asked}）</div>
+      <div class="stat-t">${escapeHtml(s.q)}</div>
+      ${wrongOpts?`<div class="stat-opts">${wrongOpts}</div>`:''}
+    </div>`;
+  });
+  html += '</div>';
+  sec.innerHTML = html;
 }
 
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
