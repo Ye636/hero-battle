@@ -22,18 +22,24 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon'
 };
+const ROOT = __dirname;
 const PUBLIC = path.join(__dirname, 'public');
 const server = http.createServer((req, res) => {
   const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   const rel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\/+/, '');
-  const fp = path.resolve(PUBLIC, rel);
-  if (!fp.startsWith(PUBLIC)) { res.writeHead(403); return res.end('Forbidden'); }
+  // 优先从 public/ 目录取文件；找不到再回退到仓库根目录（兼容 index.html 直接放根目录的部署）
+  serve(rel, [path.resolve(PUBLIC, rel), path.resolve(ROOT, rel)], res);
+});
+function serve(rel, candidates, res) {
+  if (!candidates.length) { res.writeHead(404); return res.end('Not found'); }
+  const fp = candidates.shift();
+  if (!fp.startsWith(PUBLIC) && !fp.startsWith(ROOT)) { res.writeHead(403); return res.end('Forbidden'); }
   fs.readFile(fp, (err, data) => {
-    if (err) { res.writeHead(404); return res.end('Not found'); }
+    if (err) return serve(rel, candidates, res);
     res.writeHead(200, { 'Content-Type': MIME[path.extname(fp)] || 'application/octet-stream' });
     res.end(data);
   });
-});
+}
 
 const wss = new WebSocketServer({ server });
 
