@@ -14,10 +14,9 @@ const TEAM_SIZE = parseInt(process.env.TEAM_SIZE) || 5; // 每队人数上限（
 const HOST_PASSWORD = process.env.HOST_PASSWORD || '666'; // 进入主持人模式的密码，可配
 const ROUND_TIME_MS = parseInt(process.env.ROUND_TIME_MS) || 15000; // 每题作答倒计时(秒x1000)
 const RESULT_DELAY_MS = parseInt(process.env.RESULT_DELAY_MS) || 4500; // 揭晓结果后到下一题的间隔
-const STRATEGY_TIME_MS = parseInt(process.env.STRATEGY_TIME_MS) || 8000; // 先手权选择进攻/防御的投票时间
-const BASE_ATTACK = 30;          // 队伍技能基础伤害
-const SHIELD_BASE = 50;          // 防御护盾基础减免百分比
-const SHIELD_MAX = 80;           // 护盾减免上限百分比
+const PERSON_HP = parseInt(process.env.PERSON_HP) || 50;     // 每人基础血量（队伍HP = 人数 × 个人血量）
+const WRONG_PENALTY = parseInt(process.env.WRONG_PENALTY) || 15; // 答错本队扣血（护盾不挡）
+const FAST_RATIO = 0.4;   // 作答耗时 ≤ 限时40% 视为"快答"，奖励伤害/护盾
 
 // ---------- 静态文件托管 ----------
 const MIME = {
@@ -59,15 +58,20 @@ const TEAM_POOL = [
   { name: '紫队', color: '#9b59b6', skill: { emoji: '🌌', name: '暗影' } },
   { name: '青队', color: '#00d2ff', skill: { emoji: '🌀', name: '旋风' } }
 ];
+// 3 个角色（加入时自选）
+//  warrior 战士：单发伤害最高，无连对加成
+//  mage    法师：单发较低，每多连对一次额外加成
+//  shield  盾牌手：不攻击，答对为全队加护盾减免下一次伤害
 const PLAYER_SKILLS = [
-  { emoji: '⚔️', name: '剑士', color: '#ff6b6b', power: 30, guard: 0 },
-  { emoji: '🏹', name: '射手', color: '#f39c12', power: 35, guard: 0 },
-  { emoji: '🛡️', name: '盾牌手', color: '#f1c40f', power: 15, guard: 20 },
-  { emoji: '🧙', name: '法师', color: '#9b59b6', power: 40, guard: 0 },
-  { emoji: '🥷', name: '忍者', color: '#2ecc71', power: 30, guard: 0 },
-  { emoji: '🦸', name: '战士', color: '#e74c3c', power: 35, guard: 0 },
-  { emoji: '🧝', name: '精灵', color: '#1abc9c', power: 25, guard: 0 },
-  { emoji: '🤖', name: '机甲', color: '#95a5a6', power: 40, guard: 0 }
+  { key: 'warrior', emoji: '⚔️', name: '战士', color: '#e74c3c',
+    desc: '单发伤害最高（45），但连对没有额外加成。适合稳扎稳打的主攻手。',
+    base: 45, streak: 0, guard: 0 },
+  { key: 'mage', emoji: '🔥', name: '法师', color: '#9b59b6',
+    desc: '单发伤害较低（30），但每连对一次伤害 +10。越连对越恐怖，适合答题稳的核心。',
+    base: 30, streak: 10, guard: 0 },
+  { key: 'shield', emoji: '🛡️', name: '盾牌手', color: '#f1c40f',
+    desc: '不攻击。答对时为全队加护盾（减免下一次技能伤害约 40%），连对会增强护盾。',
+    base: 0, streak: 0, guard: 40 }
 ];
 
 // ---------- 游戏状态 ----------
@@ -88,9 +92,7 @@ const state = {
   nextTimer: null,  // 揭晓后下一轮定时器
   roundStart: 0,    // 本轮出题时间戳
   answerTime: {},   // playerId -> 作答耗时ms
-  shields: {},      // teamIdx -> {reduction}
-  strategy: null,   // 先手权投票：{ teamIdx, votes:{id:..}, timer, targets:{} }
-  strategyTimer: null
+  shields: {}       // teamIdx -> {reduction}
 };
 
 // ---------- 辅助 ----------
@@ -108,7 +110,7 @@ function sendHost(obj) {
 function newTeam() {
   const i = state.teams.length;
   const base = TEAM_POOL[i % TEAM_POOL.length];
-  const t = { name: base.name, color: base.color, skill: base.skill, hp: 300, members: [], alive: true };
+  const t = { name: base.name, color: base.color, skill: base.skill, hp: 0, maxHp: 0, members: [], alive: true };
   state.teams.push(t);
   return t;
 }
@@ -139,11 +141,11 @@ function hostState() {
     type: 'state_update',
     phase: state.phase,
     teams: state.teams.map((t, i) => ({
-      idx: i, name: t.name, color: t.color, hp: t.hp, alive: t.alive, skill: t.skill,
+      idx: i, name: t.name, color: t.color, hp: t.hp, maxHp: t.maxHp || t.hp, alive: t.alive, skill: t.skill,
       shield: state.shields[i] ? state.shields[i].reduction : 0,
       members: t.members.map(id => {
         const p = playerFromId(id);
-        return p ? { id: p.id, name: p.name, photo: p.photo, skill: p.skill } : null;
+        return p ? { id: p.id, name: p.name, photo: p.photo, skill: p.skill, streak: p.streak || 0 } : null;
       }).filter(Boolean)
     })),
     currentQuestion: (state.phase === 'playing') ? {
@@ -229,140 +231,68 @@ function resolveRound() {
     }
     roundPerPlayer[p.id] = { correct, answered, choiceIdx: answered ? a : null };
   });
-  // 阶段1：答错/超时的玩家所属队伍扣血（无法被护盾抵挡）
+  // 每个玩家根据自己的对错/快慢结算个人行动
   state.players.forEach(p => {
+    const pp = roundPerPlayer[p.id];
     const t = state.teams[p.teamIdx];
     if (!t || !t.alive) return;
-    if (!roundPerPlayer[p.id].correct) damageTeam(t, 25, `${p.name} 答错，${t.name} 全队受到 25 伤害`);
-  });
-  // 阶段2：先手权 —— 本轮答得快且正确率最高的队伍，可选进攻或防御
-  const ini = computeBestTeam();
-  if (ini && (state.roundCorrect[ini.idx] || 0) > 0) {
-    startStrategy(ini.idx);
-  } else {
-    applyAttacks(-1);
-    finishRound();
-  }
-}
-
-// 队伍成员本轮答对者的技能伤害总和
-function teamPowerSum(teamIdx) {
-  const t = state.teams[teamIdx];
-  if (!t) return 0;
-  return t.members.reduce((s, id) => {
-    const p = playerFromId(id);
-    return s + (roundCorrectPlayers[id] ? (p ? p.skill.power : 0) : 0);
-  }, 0);
-}
-// 队伍成员本轮答对者的护盾加成总和
-function teamGuardSum(teamIdx) {
-  const t = state.teams[teamIdx];
-  if (!t) return 0;
-  return t.members.reduce((s, id) => {
-    const p = playerFromId(id);
-    return s + (roundCorrectPlayers[id] ? (p ? p.skill.guard : 0) : 0);
-  }, 0);
-}
-// 本轮最佳队伍（正确数优先、作答快者优先）
-function computeBestTeam() {
-  const list = state.teams.map((t, idx) => ({ t, idx })).filter(o => o.t.alive && o.t.members.length > 0);
-  const results = [];
-  list.forEach(o => {
-    const answered = o.t.members.filter(id => state.roundAnswers[id] !== undefined);
-    if (!answered.length) return;
-    const avgTime = answered.reduce((s, id) => s + (state.answerTime[id] || ROUND_TIME_MS), 0) / answered.length;
-    let speed = 0;
-    const ratio = avgTime / ROUND_TIME_MS;
-    if (ratio <= 0.4) speed = 80;
-    else if (ratio <= 0.7) speed = 40;
-    results.push({ idx: o.idx, perf: (state.roundCorrect[o.idx] || 0) * 100 + speed, avgTime });
-  });
-  if (!results.length) return null;
-  results.sort((a, b) => b.perf - a.perf || a.avgTime - b.avgTime);
-  return results[0];
-}
-
-// ---------- 先手权投票（进攻 / 防御） ----------
-function startStrategy(teamIdx) {
-  const t = state.teams[teamIdx];
-  const enemies = aliveTeams().filter(x => x.idx !== teamIdx);
-  if (!enemies.length) { applyAttacks(teamIdx); finishRound(); return; }
-  state.strategy = { teamIdx, votes: {}, targets: {} };
-  clearTimeout(state.strategyTimer);
-  state.strategyTimer = setTimeout(endStrategy, STRATEGY_TIME_MS);
-  t.members.forEach(id => {
-    const p = playerFromId(id);
-    if (p) sendTo(id, { type: 'strategy_prompt', teamName: t.name, teamColor: t.color, enemies });
-  });
-  state.players.forEach(p => { if (p.teamIdx !== teamIdx) sendTo(p.id, { type: 'strategy_waiting', teamName: t.name }); });
-  sendHost(hostState());
-}
-
-function endStrategy() {
-  clearTimeout(state.strategyTimer);
-  if (!state.strategy) return;
-  const st = state.strategy;
-  const teamIdx = st.teamIdx;
-  state.strategy = null;
-  const t = state.teams[teamIdx];
-  if (!t || !t.alive) { applyAttacks(-1); finishRound(); return; }
-  const votes = Object.values(st.votes);
-  const attackN = votes.filter(v => v === 'attack').length;
-  const defendN = votes.length - attackN;
-  if (defendN >= attackN) {
-    // 🛡️ 防御：给本队套护盾（盾牌手答对可提升减免）
-    const reduction = Math.min(SHIELD_MAX, SHIELD_BASE + teamGuardSum(teamIdx));
-    state.shields[teamIdx] = { reduction };
-    state.log.push({ text: `🛡️ ${t.name} 选择防御，护盾减免 ${reduction}% 下一次技能伤害`, type: 'hero' });
-    t.members.forEach(id => sendTo(id, { type: 'strategy_result', action: 'defend', reduction }));
-    broadcast({ type: 'shield_up', teamIdx, teamName: t.name, color: t.color, reduction });
-  } else {
-    // 🗡️ 进攻：选多数目标
-    const enemies = aliveTeams().filter(x => x.idx !== teamIdx);
-    const targetCounts = {};
-    Object.values(st.targets).forEach(ti => { targetCounts[ti] = (targetCounts[ti] || 0) + 1; });
-    let target = null;
-    if (Object.keys(targetCounts).length) {
-      const maxN = Math.max(...Object.values(targetCounts));
-      target = state.teams[+Object.keys(targetCounts).find(k => targetCounts[k] === maxN)];
+    if (!pp.correct) {
+      // 答错：本队扣血（护盾不挡）
+      p.streak = 0;
+      damageTeam(t, WRONG_PENALTY, `${p.name} 答错，${t.name} -${WRONG_PENALTY}`);
+      pp.action = { type: 'wrong', penalty: WRONG_PENALTY };
+      return;
     }
-    if (!target || !target.alive) target = state.teams[enemies[Math.floor(Math.random() * enemies.length)].idx];
-    const dmg = BASE_ATTACK + teamPowerSum(teamIdx);
-    teamDamage(target, dmg, teamIdx, t.name, t.color, t.skill.emoji);
-    t.members.forEach(id => sendTo(id, { type: 'strategy_result', action: 'attack', targetName: target.name, damage: dmg }));
-  }
-  applyAttacks(teamIdx);
+    // 答对：连击 +1，依据角色行动
+    p.streak = (p.streak || 0) + 1;
+    const fast = (state.answerTime[p.id] || ROUND_TIME_MS) <= ROUND_TIME_MS * FAST_RATIO;
+    const sk = p.skill;
+    if (sk.key === 'warrior' || sk.key === 'mage') {
+      // 攻击：自动打"本轮答错最多的存活敌方队"，无则随机
+      let dmg = sk.base + (sk.streak || 0) * (p.streak - 1);
+      if (fast) dmg += 8;
+      const target = pickAttackTarget(p);
+      if (target) {
+        const final = teamDamage(target, dmg, p.teamIdx, p.name, sk.color, sk.emoji, sk.name);
+        pp.action = { type: 'attack', targetName: target.name, damage: final, streak: p.streak, fast };
+      } else {
+        pp.action = { type: 'attack', targetName: '（无敌方）', damage: 0, streak: p.streak, fast };
+      }
+    } else if (sk.key === 'shield') {
+      // 盾牌手：为全队加护盾（连对/快答增强）
+      let reduction = sk.guard;
+      if (p.streak >= 2) reduction += 5 * (p.streak - 1);
+      if (fast) reduction += 8;
+      reduction = Math.min(75, reduction);
+      state.shields[p.teamIdx] = { reduction };
+      state.log.push({ text: `🛡️ ${p.name}（盾牌手）为 ${t.name} 加盾，减免 ${reduction}%`, type: 'hero' });
+      roundEvents.push({ shieldFor: p.teamIdx, reduction, fromName: p.name, fromEmoji: sk.emoji, teamName: t.name });
+      pp.action = { type: 'shield', reduction, streak: p.streak, fast };
+    }
+  });
   finishRound();
 }
 
-// 其余答对队伍自动攻击"本轮答错最多的存活敌方队伍"（无则随机）
-function applyAttacks(initIdx) {
-  const aliveList = state.teams.map((t, idx) => ({ t, idx })).filter(o => o.t.alive && o.t.members.length > 0);
-  state.teams.forEach((t, idx) => {
-    if (idx === initIdx) return;
-    if (!t.alive || !t.members.length) return;
-    const cc = state.roundCorrect[idx] || 0;
-    if (cc <= 0) return;
-    const enemies = aliveList.filter(o => o.idx !== idx);
-    if (!enemies.length) return;
-    let target;
-    const maxWrong = Math.max(...enemies.map(o => state.roundWrong[o.idx] || 0));
-    if (maxWrong > 0) target = enemies.find(o => (state.roundWrong[o.idx] || 0) === maxWrong);
-    else target = enemies[Math.floor(Math.random() * enemies.length)];
-    const dmg = BASE_ATTACK + teamPowerSum(idx);
-    teamDamage(target.t, dmg, idx, t.name, t.color, t.skill.emoji);
-  });
+// 选攻击目标：优先本轮答错最多的存活敌队，无则随机
+function pickAttackSource(teamIdx) {
+  const list = state.teams.map((t, idx) => ({ t, idx })).filter(o => o.t.alive && o.t.members.length > 0 && o.idx !== teamIdx);
+  if (!list.length) return null;
+  const maxWrong = Math.max(...list.map(o => state.roundWrong[o.idx] || 0));
+  if (maxWrong > 0) return list.find(o => (state.roundWrong[o.idx] || 0) === maxWrong).t;
+  return list[Math.floor(Math.random() * list.length)].t;
 }
+function pickAttackTarget(p) { return pickAttackSource(p.teamIdx); }
 
 function finishRound() {
   const q = QUESTIONS[state.qNum % QUESTIONS.length];
-  const teamsSnap = state.teams.map((t, i) => ({ idx: i, name: t.name, color: t.color, hp: t.hp, alive: t.alive }));
+  const teamsSnap = state.teams.map((t, i) => ({ idx: i, name: t.name, color: t.color, hp: t.hp, maxHp: t.maxHp || t.hp, alive: t.alive }));
   state.players.forEach(p => {
     const pp = roundPerPlayer[p.id] || { correct: false, answered: false, choiceIdx: null };
     sendTo(p.id, {
       type: 'round_result', qNum: state.qNum + 1, correct: pp.correct,
       answer: q.options[q.answer], explain: q.explain,
-      damageToMe: pp.correct ? 0 : 25, teams: teamsSnap, events: roundEvents, teamName: teamOf(p) ? teamOf(p).name : ''
+      action: pp.action || null, streak: p.streak || 0,
+      teams: teamsSnap, events: roundEvents, teamName: teamOf(p) ? teamOf(p).name : ''
     });
   });
   sendHost(hostState());
@@ -430,10 +360,8 @@ function buildStats() {
 function endGame() {
   state.phase = 'ended';
   state.waiting = null;
-  state.strategy = null;
   clearTimeout(state.roundTimer);
   clearTimeout(state.nextTimer);
-  clearTimeout(state.strategyTimer);
   const ranking = state.players
     .slice()
     .sort((a, b) => b.score - a.score || a.total - b.total)
@@ -458,18 +386,20 @@ function handleMsg(ws, msg) {
       // 若上一局已结束，进入时自动回到新大厅，方便主持人直接开始下一局
       if (state.phase === 'ended') {
         state.phase = 'lobby';
-        state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
-        state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; });
+        state.teams.forEach(t => {
+          t.maxHp = t.members.length * PERSON_HP;
+          t.hp = t.maxHp;
+          t.alive = t.members.length > 0;
+        });
+        state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; p.streak = 0; });
         state.qNum = -1;
         state.curIdx = 0;
         state.log = [];
         state.stats = {};
         state.roundAnswers = {};
         state.shields = {};
-        state.strategy = null;
         clearTimeout(state.roundTimer);
         clearTimeout(state.nextTimer);
-        clearTimeout(state.strategyTimer);
         state.waiting = null;
       }
       state.hostId = ws.__id;
@@ -486,10 +416,11 @@ function handleMsg(ws, msg) {
       if (!name) { sendTo(ws.__id, { type: 'error', msg: '请输入昵称' }); return; }
       const photo = (typeof msg.photo === 'string' && msg.photo.length < 300000) ? msg.photo : null;
       const team = pickTeam();
-      const skill = PLAYER_SKILLS[Math.floor(Math.random() * PLAYER_SKILLS.length)];
+      let skill = PLAYER_SKILLS.find(s => s.key === msg.skillKey);
+      if (!skill) skill = PLAYER_SKILLS[0]; // 默认战士
       const player = {
         id: ws.__id, name, photo, teamIdx: state.teams.indexOf(team),
-        skill, score: 0, correct: 0, total: 0
+        skill, streak: 0, score: 0, correct: 0, total: 0
       };
       state.players.push(player);
       team.members.push(player.id);
@@ -507,7 +438,13 @@ function handleMsg(ws, msg) {
       if (state.phase !== 'lobby') return;
       // 主持人随时可开始：只要有玩家在场即可（人数不足时仍可开始）
       if (state.players.length < 1) { sendTo(ws.__id, { type: 'error', msg: '还没有玩家加入，稍等片刻' }); return; }
-      state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
+      // 队伍HP = 队人数 × PERSON_HP（人多人血厚、人少人血少，保持公平）
+      state.teams.forEach(t => {
+        t.maxHp = t.members.length * PERSON_HP;
+        t.hp = t.maxHp;
+        t.alive = t.members.length > 0;
+      });
+      state.players.forEach(p => { p.streak = 0; });
       state.phase = 'playing';
       state.qNum = -1; // 首题为第 1 题
       state.curIdx = 0;
@@ -515,10 +452,8 @@ function handleMsg(ws, msg) {
       state.stats = {};
       state.roundAnswers = {};
       state.shields = {};
-      state.strategy = null;
       clearTimeout(state.roundTimer);
       clearTimeout(state.nextTimer);
-      clearTimeout(state.strategyTimer);
       state.log.push({ text: '⚔️ 战斗开始！', type: 'skill' });
       broadcast({ type: 'game_started' });
       broadcast(lobbyUpdate());
@@ -545,34 +480,24 @@ function handleMsg(ws, msg) {
       }
       break;
     }
-    case 'strategy': {
-      // 先手队伍成员投票：进攻(选目标) 或 防御
-      if (state.phase !== 'playing' || !state.strategy) return;
-      const p = playerFromId(ws.__id);
-      if (!p || p.teamIdx !== state.strategy.teamIdx) return;
-      if (state.strategy.votes[p.id]) return;
-      state.strategy.votes[p.id] = msg.action === 'attack' ? 'attack' : 'defend';
-      if (msg.action === 'attack' && typeof msg.targetIdx === 'number') state.strategy.targets[p.id] = msg.targetIdx;
-      const members = state.teams[state.strategy.teamIdx].members;
-      if (members.every(id => state.strategy.votes[id] !== undefined)) endStrategy();
-      break;
-    }
     case 'reset_game': {
       // 主持人点"再来一局"：重置到大厅，保留在线玩家与分组，可无限次开战
       if (ws.__id !== state.hostId) { sendTo(ws.__id, { type: 'error', msg: '只有主持人能重置游戏' }); return; }
       state.phase = 'lobby';
-      state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
-      state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; });
+      state.teams.forEach(t => {
+        t.maxHp = t.members.length * PERSON_HP;
+        t.hp = t.maxHp;
+        t.alive = t.members.length > 0;
+      });
+      state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; p.streak = 0; });
       state.curIdx = 0;
       state.qNum = -1; // 首题为第 1 题
       state.log = [];
       state.stats = {};
       state.roundAnswers = {};
       state.shields = {};
-      state.strategy = null;
       clearTimeout(state.roundTimer);
       clearTimeout(state.nextTimer);
-      clearTimeout(state.strategyTimer);
       state.waiting = null;
       broadcast({ type: 'game_reset' });
       broadcast(lobbyUpdate());
@@ -619,11 +544,6 @@ wss.on('connection', (ws) => {
         clearTimeout(state.roundTimer);
         resolveRound();
       }
-    }
-    // 先手权投票中有人断开：若先手队剩余成员均已投票，则结束投票
-    if (state.phase === 'playing' && state.strategy) {
-      const team = state.teams[state.strategy.teamIdx];
-      if (team && team.members.every(mid => state.strategy.votes[mid] !== undefined)) endStrategy();
     }
     broadcast(lobbyUpdate());
     sendHost(hostState());

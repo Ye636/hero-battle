@@ -1,132 +1,156 @@
 // =====================================================
 // 英雄知识大乱斗 —— 题库
-// 可自由增删/修改。每题为 {q, options, answer, explain}
-//   q      : 题目
-//   options: 4 个选项（数组）
-//   answer : 正确选项的下标（0~3）
-//   explain: 作答后的解析/说明
+// 来源：课本第四本 p372（-ity 词形变化 + exploration 选词填空）
+// 每题为 {q, options, answer, explain}
 // =====================================================
-module.exports = {
-  QUESTIONS: [
-    {
-      q: '被称为“诗仙”的中国唐代诗人是？',
-      options: ['杜甫', '李白', '白居易', '王维'],
-      answer: 1,
-      explain: '李白被后人尊称为“诗仙”，杜甫是“诗圣”。'
-    },
-    {
-      q: '地球自转一周大约需要多少时间？',
-      options: ['12 小时', '24 小时', '36 小时', '48 小时'],
-      answer: 1,
-      explain: '地球自转一周约为 24 小时，即一天。'
-    },
-    {
-      q: '世界上面积最大的海洋是？',
-      options: ['大西洋', '印度洋', '太平洋', '北冰洋'],
-      answer: 2,
-      explain: '太平洋是地球上面积最大的海洋。'
-    },
-    {
-      q: '中国的首都是哪座城市？',
-      options: ['上海', '广州', '北京', '深圳'],
-      answer: 2,
-      explain: '北京是中华人民共和国的首都。'
-    },
-    {
-      q: '人体中最重要的造血器官是？',
-      options: ['心脏', '肝脏', '肾脏', '骨髓'],
-      answer: 3,
-      explain: '骨髓是人体主要的造血器官，可产生血细胞。'
-    },
-    {
-      q: '太阳系中离太阳最近的行星是？',
-      options: ['水星', '金星', '地球', '火星'],
-      answer: 0,
-      explain: '水星是距离太阳最近的行星。'
-    },
-    {
-      q: '四大发明中的“活字印刷术”由谁发明？',
-      options: ['蔡伦', '毕昇', '张衡', '祖冲之'],
-      answer: 1,
-      explain: '北宋毕昇发明了活字印刷术。'
-    },
-    {
-      q: '一年中白天最长的一天通常是？',
-      options: ['春分', '秋分', '夏至', '冬至'],
-      answer: 2,
-      explain: '夏至日北半球白昼最长。'
-    },
-    {
-      q: '《红楼梦》的作者是？',
-      options: ['罗贯中', '吴承恩', '施耐庵', '曹雪芹'],
-      answer: 3,
-      explain: '《红楼梦》的作者是清代曹雪芹。'
-    },
-    {
-      q: '光在真空中的传播速度约为多少？',
-      options: ['30 万公里/秒', '3 万公里/秒', '3000 公里/秒', '300 万公里/秒'],
-      answer: 0,
-      explain: '光速约为每秒 30 万公里。'
-    },
-    {
-      q: '被称为“万园之园”的中国皇家园林是？',
-      options: ['拙政园', '颐和园', '圆明园', '留园'],
-      answer: 2,
-      explain: '圆明园曾被誉为“万园之园”。'
-    },
-    {
-      q: '水的化学式是？',
-      options: ['CO2', 'H2O', 'O2', 'NaCl'],
-      answer: 1,
-      explain: '水由两个氢原子和一个氧原子组成，化学式为 H2O。'
-    },
-    {
-      q: '我国最大的沙漠是？',
-      options: ['塔克拉玛干沙漠', '古尔班通古特沙漠', '巴丹吉林沙漠', '腾格里沙漠'],
-      answer: 0,
-      explain: '塔克拉玛干沙漠是我国最大的沙漠。'
-    },
-    {
-      q: '“闻鸡起舞”这个成语与哪位历史人物有关？',
-      options: ['祖逖', '韩信', '岳飞', '关羽'],
-      answer: 0,
-      explain: '东晋祖逖与刘琨“闻鸡起舞”，立志报国。'
-    },
-    {
-      q: '蜜蜂采蜜时，通常用身体的哪个部位携带花粉？',
-      options: ['翅膀', '后足', '腹部', '触角'],
-      answer: 1,
-      explain: '蜜蜂用后足上的花粉筐携带花粉。'
-    },
-    {
-      q: '国际象棋中，马（骑士）走什么路线？',
-      options: ['横线', '竖线', 'L 形', '对角线'],
-      answer: 2,
-      explain: '马的走法是“L”形。'
-    },
-    {
-      q: '下列哪种颜色通常表示“危险/停止”？',
-      options: ['绿色', '蓝色', '黄色', '红色'],
-      answer: 3,
-      explain: '红色通常用于表示危险或停止。'
-    },
-    {
-      q: '我国最长的河流是？',
-      options: ['黄河', '长江', '珠江', '淮河'],
-      answer: 1,
-      explain: '长江是我国最长的河流。'
-    },
-    {
-      q: '“三人行，必有我师焉”出自哪部典籍？',
-      options: ['《论语》', '《孟子》', '《道德经》', '《庄子》'],
-      answer: 0,
-      explain: '这句话出自《论语·述而》。'
-    },
-    {
-      q: '火山喷发时，从火山口喷出的炽热熔岩叫什么？',
-      options: ['岩浆', '岩石', '矿石', '泥土'],
-      answer: 0,
-      explain: '喷出地表的熔岩即岩浆冷却前的状态。'
-    }
-  ]
-};
+const QUESTIONS = [
+  // ---- A. suffix -ity：名词对应的形容词 ----
+  {
+    q: '"curiosity"（好奇心）这个名词是由哪个形容词变来的？',
+    options: ['curious', 'cure', 'currently', 'curtain'],
+    answer: 0,
+    explain: 'curious（好奇的）→ curiosity。属于规则变化（-ous → -osity）。'
+  },
+  {
+    q: '"creativity"（创造力）是由哪个形容词变来的？',
+    options: ['create', 'creative', 'creature', 'creator'],
+    answer: 1,
+    explain: 'creative（有创造力的）→ creativity。规则变化。'
+  },
+  {
+    q: '"authenticity"（真实性）是由哪个形容词变来的？',
+    options: ['author', 'authentic', 'autumn', 'authority'],
+    answer: 1,
+    explain: 'authentic（真迹的、真正的）→ authenticity。'
+  },
+  {
+    q: '"clarity"（清晰）是由哪个形容词变来的？',
+    options: ['clear', 'clerk', 'class', 'climb'],
+    answer: 0,
+    explain: 'clear（清楚的）→ clarity。注意：clear → clarity 是不规则变化（去 e + -ity）。'
+  },
+  {
+    q: '"possibility"（可能性）是由哪个形容词变来的？',
+    options: ['possible', 'posture', 'pocket', 'position'],
+    answer: 0,
+    explain: 'possible（可能的）→ possibility（le → bility）。'
+  },
+  {
+    q: '"necessity"（必需品/必然）是由哪个形容词变来的？',
+    options: ['necessary', 'nest', 'never', 'notice'],
+    answer: 0,
+    explain: 'necessary（必要的）→ necessity（去 y + -ity）。不规则变化之一。'
+  },
+  {
+    q: '"humidity"（湿度）是由哪个形容词变来的？',
+    options: ['human', 'humor', 'humid', 'hundred'],
+    answer: 2,
+    explain: 'humid（潮湿的）→ humidity。'
+  },
+  {
+    q: '"mentality"（心态）是由哪个形容词变来的？',
+    options: ['mental', 'mention', 'metal', 'menu'],
+    answer: 0,
+    explain: 'mental（精神的、心理的）→ mentality。'
+  },
+  {
+    q: '"intensity"（强度）是由哪个形容词变来的？',
+    options: ['intend', 'intense', 'intent', 'into'],
+    answer: 1,
+    explain: 'intense（强烈的）→ intensity。'
+  },
+  {
+    q: '"civility"（礼貌、文明）是由哪个形容词变来的？',
+    options: ['civil', 'citizen', 'city', 'circle'],
+    answer: 0,
+    explain: 'civil（公民的、文明的）→ civility。'
+  },
+
+  // ---- B. exploration & discovery 选词填空 ----
+  {
+    q: "Part of Sir Edmund Hillary's ___ to climb Mount Everest was for the thrill of being the first.",
+    options: ['motivation', 'mission', 'network', 'boundary'],
+    answer: 0,
+    explain: 'motivation（动力）。希拉里攀登珠峰的部分动力在于成为第一人的那种刺激。'
+  },
+  {
+    q: 'It was for the ___ of being the first to reach the top of Mount Everest.',
+    options: ['hypothesis', 'thrill', 'endurance', 'settlement'],
+    answer: 1,
+    explain: 'thrill（刺激、兴奋）。'
+  },
+  {
+    q: 'Polynesians explored the oceans by canoe and established ___ on islands around the Pacific.',
+    options: ['networks', 'boundaries', 'settlements', 'missions'],
+    answer: 2,
+    explain: 'establish settlements（建立定居点）。'
+  },
+  {
+    q: 'They set up extensive trading ___, exchanging many types of plants and animals.',
+    options: ['networks', 'boundaries', 'thrills', 'hypotheses'],
+    answer: 0,
+    explain: 'trading networks（贸易网络）。'
+  },
+  {
+    q: 'Isabella Bird ___ up an active volcano during her exploration of the United States.',
+    options: ['trekked', 'mapped', 'launched', 'sought'],
+    answer: 0,
+    explain: 'trek up a volcano（长途跋涉登上火山）。'
+  },
+  {
+    q: 'Annie Londonderry became the first woman to ___ the world on a bicycle.',
+    options: ['circumnavigate', 'launch', 'motivate', 'settle'],
+    answer: 0,
+    explain: 'circumnavigate（环航、环球）。'
+  },
+  {
+    q: 'The ___ of Apollo 8 in December 1968 marked a turning point in space exploration.',
+    options: ['launch', 'mission', 'boundary', 'settlement'],
+    answer: 0,
+    explain: 'the launch of Apollo 8（阿波罗8号的发射）。'
+  },
+  {
+    q: 'The human race was pushing the ___ of our knowledge about the universe.',
+    options: ['networks', 'boundaries', 'thrills', 'missions'],
+    answer: 1,
+    explain: 'push the boundaries of knowledge（拓展知识的边界）。'
+  },
+  {
+    q: "Shackleton tested the limits of his crew's ___ by sailing 720 miles across the South Atlantic.",
+    options: ['motivation', 'mission', 'endurance', 'hypothesis'],
+    answer: 2,
+    explain: 'endurance（耐力、忍耐力）。'
+  },
+  {
+    q: "NASA's Curiosity landed on Mars in 2012. Its ___ is to gather scientific data on climate and geology.",
+    options: ['mission', 'boundary', 'network', 'thrill'],
+    answer: 0,
+    explain: 'mission（任务）。'
+  },
+  {
+    q: 'Curiosity was sent to test the ___ about the existence of water on Mars.',
+    options: ['hypothesis', 'mission', 'boundary', 'endurance'],
+    answer: 0,
+    explain: 'hypothesis（假设）。'
+  },
+  {
+    q: 'Explorers like Zheng He, Vasco da Gama and James Cook ___ the world.',
+    options: ['mapped', 'launched', 'trekked', 'sought'],
+    answer: 0,
+    explain: 'map the world（绘制世界地图）。'
+  },
+  {
+    q: 'They wanted to better humanity, not just ___ fame and fortune.',
+    options: ['seek', 'motivate', 'launch', 'endure'],
+    answer: 0,
+    explain: 'seek fame and fortune（追逐名利）。'
+  },
+  {
+    q: '下面哪个形容词 → 名词是**不规则**变化？',
+    options: ['clear → clarity', 'curious → curiosity', 'humid → humidity', 'civil → civility'],
+    answer: 0,
+    explain: 'clear → clarity 是不规则变化（去 e）；其余多为规则加 -ity。'
+  }
+];
+
+module.exports = { QUESTIONS };

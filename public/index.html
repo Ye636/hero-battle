@@ -65,6 +65,9 @@
   .player-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .player-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px;font-size:13px;animation:pop .3s}
   .player-chip img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+  .role-card{flex:1;min-width:90px;background:rgba(255,255,255,.06);border:2px solid transparent;border-radius:14px;padding:10px 6px;cursor:pointer;transition:.15s}
+  .role-card.sel{border-color:#ffd700;background:rgba(255,215,0,.12);transform:translateY(-2px)}
+  .role-card:hover{background:rgba(255,255,255,.1)}
   .room-code{text-align:center;color:#aaa;font-size:12px;margin-bottom:6px}
   .qr-caption{text-align:center;color:#aaa;font-size:12px;margin-top:6px}
   /* ---- 学生等待大厅 ---- */
@@ -175,6 +178,24 @@
         <input type="file" id="fileInput" accept="image/*">
       </div>
       <input type="text" id="studentName" placeholder="输入你的昵称" maxlength="12">
+      <div style="text-align:left;margin:10px 0 4px;font-size:13px;color:#aaa">选择你的角色（答对后根据角色行动）：</div>
+      <div id="rolePick" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:6px">
+        <div class="role-card" data-key="warrior">
+          <div style="font-size:30px">⚔️</div>
+          <div style="font-weight:bold;color:#e74c3c">战士</div>
+          <div style="font-size:11px;color:#bbb;line-height:1.4;margin-top:2px">单发伤害最高45，但连对没有额外加成</div>
+        </div>
+        <div class="role-card" data-key="mage">
+          <div style="font-size:30px">🔥</div>
+          <div style="font-weight:bold;color:#9b59b6">法师</div>
+          <div style="font-size:11px;color:#bbb;line-height:1.4;margin-top:2px">单发30，每连对一次+10，越连越猛</div>
+        </div>
+        <div class="role-card" data-key="shield">
+          <div style="font-size:30px">🛡️</div>
+          <div style="font-weight:bold;color:#f1c40f">盾牌手</div>
+          <div style="font-size:11px;color:#bbb;line-height:1.4;margin-top:2px">不攻击，答对为全队加护盾减伤</div>
+        </div>
+      </div>
       <button class="btn green large" id="joinBtn" onclick="joinRoom()" disabled>⚔️ 加入战斗！</button>
     </div>
     <div class="hint-bar">
@@ -297,10 +318,19 @@ document.getElementById('fileInput').addEventListener('change', function(){
 document.getElementById('studentName').addEventListener('input', function(){
   document.getElementById('joinBtn').disabled = !(this.value.trim() && (myPhoto || true));
 });
+let myRole = 'warrior';
+document.querySelectorAll('.role-card').forEach(card => {
+  if (card.dataset.key === myRole) card.classList.add('sel');
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('sel'));
+    card.classList.add('sel');
+    myRole = card.dataset.key;
+  });
+});
 function joinRoom() {
   const name = document.getElementById('studentName').value.trim();
   if (!name) return;
-  send({ type:'join', name, photo: myPhoto });
+  send({ type:'join', name, photo: myPhoto, skillKey: myRole });
 }
 
 // ===== 主持人 =====
@@ -407,22 +437,6 @@ function handleMsg(msg) {
       else renderHostResolve(msg);
       break;
 
-    case 'strategy_prompt':
-      if (!isHost) showStrategy(msg);
-      break;
-
-    case 'strategy_waiting':
-      if (!isHost) waitingStrategy(msg);
-      break;
-
-    case 'strategy_result':
-      if (!isHost) strategyDone(msg);
-      break;
-
-    case 'shield_up':
-      if (isHost) shieldFx(msg);
-      break;
-
     case 'state_update':
       if (isHost) renderHostState(msg);
       break;
@@ -471,108 +485,41 @@ function lockIn(idx, box) {
 }
 function revealRound(msg) {
   stopCountdown();
-  // 队伍血条更新
+  // 队伍血条更新（按 maxHp 比例）
   const strip = document.getElementById('teamStrip');
-  strip.innerHTML = (msg.teams || []).map(t =>
-    `<div class="mini-team ${t.alive?'':'dying'}" style="border-color:${t.color}">
-      <div class="mt-name" style="color:${t.color}">${t.name}</div>
-      <div class="mt-hp"><i style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></i></div>
-    </div>`).join('');
+  strip.innerHTML = (msg.teams || []).map(t => {
+    const hp = Math.max(0, t.hp); const mx = t.maxHp || t.hp || 1;
+    return `<div class="mini-team ${t.alive?'':'dying'}" style="border-color:${t.color}">
+      <div class="mt-name" style="color:${t.color}">${t.name}${t.shield?` 🛡️`:''}</div>
+      <div class="mt-hp"><i style="width:${hp/mx*100}%;background:${t.color}"></i></div>
+      <div style="font-size:10px;color:#aaa">${hp}/${mx}</div>
+    </div>`;
+  }).join('');
   // 高亮正确/错误选项
   const btns = document.querySelectorAll('#optsBox .option-btn');
   btns.forEach(b => {
     if (b.textContent.slice(3).trim() === msg.answer) b.classList.add('correct');
     else if (parseInt(b.dataset.idx) === msg.choiceIdx) b.classList.add('wrong');
   });
-  // 揭晓
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal ' + (msg.correct ? 'right show' : 'wrong show');
   let txt = msg.correct ? `✅ 答对了！` : `❌ 答错了！正确答案：<b>${msg.answer}</b>`;
-  txt += `<br>${msg.explain}`;
-  // 我所在队伍的战斗事件
-  if (msg.events && msg.events.length) {
-    const myIdx = myTeam ? null : null;
-    const myEvent = msg.events.find(e => e.toTeam === myTeam?.idx || e.fromTeam === myTeam?.idx);
-    const iAm = (myTeam && msg.teams && msg.teams.find(t => t.name === myTeam.name));
-    if (iAm) {
-      const involved = msg.events.filter(e => e.fromTeam === iAm.idx || e.toTeam === iAm.idx);
-      if (involved.length) {
-        const last = involved[involved.length - 1];
-        if (last.fromTeam === iAm.idx) txt += `<br>🔥 你的队伍释放技能，攻击了 <b style="color:${last.toColor}">${last.toName}</b>（-${last.damage} HP）`;
-        else txt += `<br>💥 你的队伍被 <b style="color:${last.fromColor}">${last.fromName}</b> 攻击，受到 ${last.damage} 伤害`;
-      }
-    }
+  // 个人行动反馈
+  const a = msg.action;
+  if (a) {
+    if (a.type === 'wrong') txt += `<br>💥 本队受到 ${a.penalty} 点惩罚伤害`;
+    else if (a.type === 'attack') txt += `<br>⚔️ 你对 <b style="color:#ff6b6b">${a.targetName}</b> 造成 <b>${a.damage}</b> 伤害${a.streak>=2?`（连对 ${a.streak} 次）`:''}${a.fast?' ⚡快答+8':''}`;
+    else if (a.type === 'shield') txt += `<br>🛡️ 你为全队加了护盾（减免下一次伤害 ${a.reduction}%）${a.streak>=2?`（连对 ${a.streak} 次）`:''}`;
   }
+  txt += `<br><span style="font-size:13px;color:#ccc">${msg.explain}</span>`;
   rb.innerHTML = txt;
   // 我的队伍受击抖动
   if (msg.teams && myTeam) {
-    const myEl = document.querySelector(`.mini-team[data-team]`) ;
     const idx = msg.teams.findIndex(t => t.name === myTeam.name);
     if (idx >= 0) {
       const el = document.querySelectorAll('.mini-team')[idx];
       if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
     }
-  }
-}
-
-// ===== 先手权（答得快且正确率高 → 进攻或防御）=====
-let pendingStrategy = null;
-function showStrategy(msg) {
-  show('answerPanel');
-  pendingStrategy = msg;
-  const rb = document.getElementById('revealBox');
-  rb.className = 'reveal show';
-  rb.style.borderLeft = '4px solid #f1c40f';
-  rb.style.background = 'rgba(241,196,15,.12)';
-  rb.innerHTML = `
-    <div style="font-weight:bold;color:#ffd700">🎯 先手权！你们的队伍答得又快又准</div>
-    <div style="font-size:13px;color:#ccc;margin:6px 0">选择进攻敌方，或防御本队抵挡下一波攻击</div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn" onclick="vote('attack')">🗡️ 进攻</button>
-      <button class="btn green" onclick="vote('defend')">🛡️ 防御本队</button>
-    </div>
-    <div id="targetPick" style="display:none;margin-top:10px">
-      <div style="font-size:13px;color:#ccc;margin-bottom:6px">选择要进攻的敌方队伍：</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap" id="targetBtns"></div>
-    </div>`;
-}
-function vote(action) {
-  if (!pendingStrategy) return;
-  const rb = document.getElementById('revealBox');
-  if (action === 'defend') {
-    send({ type: 'strategy', action: 'defend' });
-    rb.innerHTML = '<div style="color:#2ecc71">🛡️ 已提交：防御本队</div>';
-    return;
-  }
-  document.getElementById('targetPick').style.display = 'block';
-  const box = document.getElementById('targetBtns');
-  box.innerHTML = '';
-  (pendingStrategy.enemies || []).forEach(e => {
-    const b = document.createElement('button');
-    b.className = 'btn';
-    b.style.background = 'linear-gradient(135deg,' + e.color + ',#333)';
-    b.textContent = '⚔️ ' + e.name;
-    b.onclick = () => {
-      send({ type: 'strategy', action: 'attack', targetIdx: e.idx });
-      rb.innerHTML = '<div style="color:#ff6b6b">🗡️ 已提交：进攻 ' + esc(e.name) + '</div>';
-    };
-    box.appendChild(b);
-  });
-}
-function waitingStrategy(msg) {
-  show('answerPanel');
-  const rb = document.getElementById('revealBox');
-  rb.className = 'reveal show';
-  rb.style.borderLeft = '4px solid #f1c40f';
-  rb.style.background = 'rgba(0,0,0,.3)';
-  rb.innerHTML = `<div style="font-size:14px">⏳ 等待 <b style="color:#ffd700">${esc(msg.teamName)}</b> 选择进攻或防御...</div>`;
-}
-function strategyDone(msg) {
-  const rb = document.getElementById('revealBox');
-  if (msg.action === 'defend') {
-    rb.innerHTML = `<div style="font-size:14px">🛡️ 你的队伍选择<b>防御</b>，护盾可减免 <b style="color:#2ecc71">${msg.reduction}%</b> 的下一次伤害</div>`;
-  } else {
-    rb.innerHTML = `<div style="font-size:14px">🗡️ 你的队伍进攻了 <b style="color:#ff6b6b">${esc(msg.targetName)}</b>，造成 ${msg.damage} 伤害</div>`;
   }
 }
 
@@ -592,8 +539,8 @@ function renderHostState(s) {
     `<div class="host-team ${t.alive?'':'dead'}" data-team="${t.idx}" style="border-color:${t.color}">
       <span class="big-emoji">${t.skill.emoji}${t.shield?` <span class="shield-badge" style="font-size:22px" title="护盾减免${t.shield}%">🛡️</span>`:''}</span>
       <div class="ht-name" style="color:${t.color}">${t.name}</div>
-      <div class="host-hp"><i style="width:${Math.max(0,t.hp/300*100)}%;background:${t.color}"></i><span>${t.hp}</span></div>
-      <div class="host-members">${t.members.map(m=>m.photo?`<img src="${m.photo}" title="${esc(m.name)}">`:`<span class="mini-av" title="${esc(m.name)}">${m.skill?m.skill.emoji:'?'}</span>`).join('')}</div>
+      <div class="host-hp"><i style="width:${Math.max(0,t.hp/(t.maxHp||t.hp||1)*100)}%;background:${t.color}"></i><span>${t.hp}/${t.maxHp||t.hp}</span></div>
+      <div class="host-members">${t.members.map(m=>m.photo?`<img src="${m.photo}" title="${esc(m.name)} ${m.skill?m.skill.emoji+m.skill.name:''}${m.streak>=2?' 连对'+m.streak:''}">`:`<span class="mini-av" title="${esc(m.name)}${m.skill?' '+m.skill.emoji+m.skill.name:''}${m.streak>=2?' 连对'+m.streak:''}">${m.skill?m.skill.emoji:'?'}</span>`).join('')}</div>
     </div>`).join('');
   if (s.currentQuestion) {
     document.getElementById('hqNum').textContent = `第 ${s.currentQuestion.qNum} 题`;
@@ -601,29 +548,6 @@ function renderHostState(s) {
     document.getElementById('hAnswered').textContent = `已作答 ${s.answered} 人`;
   }
   renderHostLog(s.log);
-}
-function shieldFx(msg) {
-  const row = document.getElementById('hostArena');
-  const el = row.querySelector(`.host-team[data-team="${msg.teamIdx}"]`);
-  if (el) {
-    // 在队伍上方浮现护盾
-    const arena = document.getElementById('hostArena');
-    const ar = arena.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
-    const s = document.createElement('div');
-    s.style.position = 'absolute'; s.style.fontSize = '40px'; s.style.zIndex = '30';
-    s.style.left = (r.left - ar.left + r.width / 2 - 20) + 'px';
-    s.style.top = (r.top - ar.top - 30) + 'px';
-    s.textContent = '🛡️';
-    s.style.animation = 'bounce 1s infinite';
-    arena.appendChild(s);
-    setTimeout(() => s.remove(), 2000);
-  }
-  const log = document.getElementById('hostLog');
-  const p = document.createElement('p');
-  p.style.color = '#f1c40f';
-  p.textContent = `🛡️ ${msg.teamName} 升起护盾（减免 ${msg.reduction}%）`;
-  log.appendChild(p); log.scrollTop = log.scrollHeight;
 }
 function renderHostResolve(msg) {
   stopCountdown();
