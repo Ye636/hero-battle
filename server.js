@@ -244,6 +244,17 @@ function handleMsg(ws, msg) {
         sendTo(ws.__id, { type: 'host_rejected', msg: '密码错误，无法进入主持人模式' });
         return;
       }
+      // 若上一局已结束，进入时自动回到新大厅，方便主持人直接开始下一局
+      if (state.phase === 'ended') {
+        state.phase = 'lobby';
+        state.teams.forEach(t => { t.hp = 300; t.alive = t.members.length > 0; });
+        state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; });
+        state.qNum = -1;
+        state.curIdx = 0;
+        state.log = [];
+        state.stats = {};
+        state.waiting = null;
+      }
       state.hostId = ws.__id;
       sendHost(lobbyUpdate());
       sendHost(hostState());

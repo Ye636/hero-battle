@@ -409,7 +409,9 @@ function handleMsg(msg) {
 
 // ====== 主持人渲染 ======
 function renderHostState(s) {
-  show('hostBattlePanel');
+  if(s.phase === 'lobby') { show('hostPanel'); return; }   // 未开始：留在主持人大厅
+  if(s.phase === 'ended') return;                            // 已结束：保持结算页不动
+  show('hostBattlePanel');                                   // 对局中：切到战场实况
   const row = document.getElementById('hostTeams');
   row.innerHTML = '';
   s.teams.forEach((t,i)=>{
