@@ -68,6 +68,13 @@
   .role-card{flex:1;min-width:90px;background:rgba(255,255,255,.06);border:2px solid transparent;border-radius:14px;padding:10px 6px;cursor:pointer;transition:.15s}
   .role-card.sel{border-color:#ffd700;background:rgba(255,215,0,.12);transform:translateY(-2px)}
   .role-card:hover{background:rgba(255,255,255,.1)}
+  .rules-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .rules-card{background:linear-gradient(160deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,.3);border-radius:18px;max-width:420px;width:100%;padding:20px;color:#eee;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .rules-head{font-size:18px;font-weight:bold;color:#ffd700;text-align:center;margin-bottom:10px}
+  .rules-body{font-size:13px;line-height:1.7;color:#ccc;max-height:60vh;overflow-y:auto;margin-bottom:14px}
+  .rules-body b{color:#fff}
+  .role-row{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+  .role-ico{font-size:22px;flex-shrink:0}
   .room-code{text-align:center;color:#aaa;font-size:12px;margin-bottom:6px}
   .qr-caption{text-align:center;color:#aaa;font-size:12px;margin-top:6px}
   /* ---- 学生等待大厅 ---- */
@@ -200,7 +207,24 @@
     </div>
     <div class="hint-bar">
       <span>正在等待主持人开始游戏</span>
+      <button class="link-btn" onclick="showRules()">📖 游戏规则</button>
       <button class="link-btn" onclick="goHost()">🎮 主持人大屏</button>
+    </div>
+  </div>
+
+  <!-- ===== 游戏规则弹窗 ===== -->
+  <div id="rulesModal" class="rules-modal hidden">
+    <div class="rules-card">
+      <div class="rules-head">📖 游戏规则</div>
+      <div class="rules-body">
+        <p><b>玩法：</b>所有队伍同时答同一道题（限时 15 秒）。答对的人按自己的角色自动行动，答错本队扣 15 血。血量先归零的队伍淘汰，最后只剩一队获胜。</p>
+        <div class="role-row"><span class="role-ico" style="color:#e74c3c">⚔️</span><div><b>战士</b>：单发伤害最高（45），但连对没有额外加成。适合稳扎稳打。</div></div>
+        <div class="role-row"><span class="role-ico" style="color:#9b59b6">🔥</span><div><b>法师</b>：单发较低（30），但每多连对一次伤害 +10，越连越猛。</div></div>
+        <div class="role-row"><span class="role-ico" style="color:#f1c40f">🛡️</span><div><b>盾牌手</b>：不攻击。答对为全队加护盾（减免下一次技能伤害约 40%），连对会让护盾更强。</div></div>
+        <p style="margin-top:10px">⚡ <b>快答奖励</b>：在限时 40% 时间内答对，攻击 +8、护盾 +8。<br>
+        🩸 <b>队伍血量</b>＝队员人数 × 50。</p>
+      </div>
+      <button class="btn green" onclick="hideRules()">知道了</button>
     </div>
   </div>
 
@@ -229,6 +253,7 @@
       <div class="player-list" id="myTeamMembers" style="margin-top:8px"></div>
     </div>
     <p style="color:#aaa;font-size:13px;margin-top:8px">系统已自动为你分配队伍</p>
+    <button class="link-btn" onclick="showRules()" style="margin-top:6px">📖 游戏规则</button>
   </div>
 
   <!-- ===== 学生作答（同时作答） ===== -->
@@ -319,6 +344,8 @@ document.getElementById('studentName').addEventListener('input', function(){
   document.getElementById('joinBtn').disabled = !(this.value.trim() && (myPhoto || true));
 });
 let myRole = 'warrior';
+function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
+function hideRules(){ document.getElementById('rulesModal').classList.add('hidden'); }
 document.querySelectorAll('.role-card').forEach(card => {
   if (card.dataset.key === myRole) card.classList.add('sel');
   card.addEventListener('click', () => {
