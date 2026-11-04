@@ -577,7 +577,8 @@ function renderTeamStrip(teams) {
 // ===== 战场场景（所有角色并排，自己排第一） =====
 function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   const box = document.getElementById('battleArena');
-  if (!box || !teams || !teams.length) { if (box) box.innerHTML = ''; return; }
+  if (!box) return;
+  teams = teams || [];
   // 收集所有角色：自己排第一，然后按组排列
   let allHeroes = [];
   // 自己的角色排第一
@@ -586,7 +587,7 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   // 其他组的角色
   teams.forEach((t, i) => {
     (t.members || []).forEach(m => {
-      if (myTeam && i === myTeam.idx && m.name === myName) return; // 跳过自己（已加）
+      if (myTeam && i === myTeam.idx && m.name === myName) return;
       allHeroes.push({ hero: heroSVG(m.skill || 'warrior', t.color), name: m.name, color: t.color, teamIdx: i });
     });
   });
@@ -692,7 +693,8 @@ function showQuestion(msg) {
   show('answerPanel');
   stopCountdown();
   document.getElementById('qNum').textContent = `第 ${msg.qNum} 题 / ${msg.total || 24}`;
-  document.getElementById('qText').innerHTML = esc(msg.question);
+  document.getElementById('qText').innerHTML =
+    (msg.img ? `<div style="font-size:30px;margin-bottom:4px">${msg.img}</div>` : '') + esc(msg.question);
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
   msg.options.forEach((opt, i) => {
