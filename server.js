@@ -464,8 +464,8 @@ function handleMsg(ws, msg) {
         p.correct = (p.correct || 0) + 1;
         p.streak = (p.streak || 0) + 1;
         const sk = p.skill;
-        // 答对：攻击手若快答 → 选目标；慢答或盾牌手 → 立即结算
-        if ((sk.key === 'warrior' || sk.key === 'mage') && fast) {
+        // 答对：攻击手都可以选目标；盾牌手自动加盾
+        if (sk.key === 'warrior' || sk.key === 'mage') {
           const enemies = state.teams.map((tt, idx) => ({ idx, name: tt.name, color: tt.color, alive: tt.alive }))
             .filter(o => o.alive && o.idx !== p.teamIdx);
           if (enemies.length) {

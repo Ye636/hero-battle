@@ -118,6 +118,19 @@
   .reveal.right{background:rgba(46,204,113,.15);border-left:4px solid #2ecc71}
   .reveal.wrong{background:rgba(231,76,60,.15);border-left:4px solid #e74c3c}
   .reveal.show{display:block}
+  /* ---- 新增特效 ---- */
+  @keyframes flashGreen{0%{box-shadow:0 0 0 0 rgba(46,204,113,.9)}100%{box-shadow:0 0 0 40px rgba(46,204,113,0)}}
+  @keyframes flashRed{0%{box-shadow:0 0 0 0 rgba(231,76,60,.9)}100%{box-shadow:0 0 0 40px rgba(231,76,60,0)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  @keyframes shieldGlow{0%,100%{box-shadow:0 0 0 0 rgba(241,196,15,.6)}50%{box-shadow:0 0 20px 8px rgba(241,196,15,.4)}}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(10px)}20%{opacity:1}100%{opacity:0;transform:translateY(-40px)}}
+  @keyframes fireball{0%{transform:translate(0,0) scale(.5);opacity:1}100%{transform:translate(var(--dx,0),var(--dy,-120px)) scale(1.4);opacity:0}}
+  .fx-correct{animation:flashGreen .6s, pulse .5s}
+  .fx-wrong{animation:flashRed .6s, shake .5s}
+  .fx-shield{animation:shieldGlow 1.2s infinite}
+  .fx-pulse{animation:pulse 1.2s ease-in-out infinite}
+  .float-txt{position:fixed;left:50%;top:40%;transform:translateX(-50%);font-size:42px;font-weight:900;pointer-events:none;z-index:999;animation:floatUp 1.2s ease-out forwards}
+  .fireball{position:fixed;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#ffd700,#ff4500);box-shadow:0 0 20px #ff4500;z-index:999;pointer-events:none;animation:fireball .7s ease-out forwards}
   /* ---- 主持人战斗大屏 ---- */
   #hostBattlePanel{max-width:900px;margin:0 auto}
   .host-arena{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0;position:relative}
@@ -525,7 +538,7 @@ function showPickTarget(msg) {
   const wrap = document.getElementById('pickBtns');
   (msg.enemies || []).forEach(e => {
     const b = document.createElement('button');
-    b.className = 'btn';
+    b.className = 'btn fx-pulse';
     b.style.background = 'linear-gradient(135deg,' + e.color + ',#333)';
     b.textContent = '⚔️ ' + e.name;
     b.onclick = () => {
@@ -547,7 +560,28 @@ function revealAction(msg) {
     </div>`;
   }).join('');
   const rb = document.getElementById('revealBox');
-  rb.className = 'reveal ' + (msg.correct ? 'right show' : 'wrong show');
+  rb.className = 'reveal ' + (msg.correct ? 'right show fx-correct' : 'wrong show fx-wrong');
+  // 浮字特效
+  const fl = document.createElement('div');
+  fl.className = 'float-txt';
+  fl.style.color = msg.correct ? '#2ecc71' : '#e74c3c';
+  fl.textContent = msg.correct ? '✓ CORRECT!' : '✗ WRONG';
+  document.body.appendChild(fl);
+  setTimeout(() => fl.remove(), 1200);
+  // 攻击特效：火球
+  if (msg.action && msg.action.type === 'attack') {
+    const fb = document.createElement('div');
+    fb.className = 'fireball';
+    fb.style.left = '50%'; fb.style.top = '50%';
+    fb.style.setProperty('--dx', (Math.random()*100-50)+'px');
+    fb.style.setProperty('--dy', (-80-Math.random()*60)+'px');
+    document.body.appendChild(fb);
+    setTimeout(() => fb.remove(), 700);
+  }
+  // 护盾特效
+  if (msg.action && msg.action.type === 'shield') {
+    rb.classList.add('fx-shield');
+  }
   let txt = msg.correct ? `✅ 答对了！` : `❌ 答错了！正确答案：<b>${msg.answer}</b>`;
   const a = msg.action;
   if (a) {
