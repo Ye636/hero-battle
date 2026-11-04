@@ -328,6 +328,7 @@
         <div class="cd-num" id="cdNum"></div>
         <div class="reveal" id="revealBox"></div>
       </div>
+      <div style="margin-top:12px;font-size:13px;color:#ffd700;font-weight:bold">⚔️ 战场</div>
       <div class="battle-arena" id="battleArena"></div>
     </div>
   </div>
@@ -565,7 +566,7 @@ function stopCountdown() { if (cdTimer) clearInterval(cdTimer); cdTimer = null; 
 function renderTeamStrip(teams) {
   cachedTeams = teams || [];
   const box = document.getElementById('teamStrip');
-  if (!teams || !teams.length) { box.innerHTML = ''; return; }
+  if (!teams || !teams.length) { box.innerHTML = ''; renderBattleArena([]); return; }
   box.innerHTML = teams.map(t => {
     const pct = t.maxHp ? Math.max(0, t.hp / t.maxHp * 100) : 0;
     return `<div class="mini-team" data-team="${t.idx}" style="border-color:${t.color}">
