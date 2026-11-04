@@ -296,6 +296,7 @@
       <div class="cd-num" id="hcdNum"></div>
     </div>
     <div class="host-log" id="hostLog"></div>
+    <div id="hostStatsSection" style="display:none;margin-top:16px"></div>
   </div>
 
   <!-- ===== 结算 ===== -->
@@ -730,34 +731,43 @@ function showResult(msg) {
   document.getElementById('replayBtn').style.display = isHost ? 'inline-block' : 'none';
 }
 function renderStats(stats) {
-  const sec = document.getElementById('statsSection');
-  sec.style.display = 'block';
-  if (!stats || !stats.length) { sec.innerHTML = '<div class="stat-block"><b>📊 答题统计</b><div class="stat-none">暂无数据</div></div>'; return; }
-  let html = '<div class="stat-block"><b>📊 实时答题统计（每题正确率 & 各选项人数）</b>';
+  if (!stats || !stats.length) return;
+  let html = '<div class="stat-block"><b>📊 各题正确率与选项选择人数</b>';
   stats.forEach(s => {
     const pct = s.asked ? Math.round(s.correct / s.asked * 100) : 0;
     const barColor = pct >= 70 ? '#2ecc71' : pct >= 40 ? '#f39c12' : '#e74c3c';
     let optsHtml = '';
     (s.options || []).forEach((opt, i) => {
       const cnt = (s.perOption && s.perOption[i]) || 0;
+      const maxCnt = Math.max(...(s.options || []).map((_, j) => (s.perOption && s.perOption[j]) || 0), 1);
       const isAns = i === s.answer;
-      optsHtml += `<div style="display:flex;align-items:center;gap:6px;margin:2px 0;font-size:12px">
-        <span style="width:16px;color:${isAns?'#2ecc71':'#aaa'}">${String.fromCharCode(65+i)}</span>
-        <span style="flex:1;color:#ccc">${esc(opt)}</span>
-        <span style="color:${isAns?'#2ecc71':'#aaa'};font-weight:bold">${cnt}人${isAns?' ✓':''}</span>
+      const w = Math.round(cnt / maxCnt * 100);
+      optsHtml += `<div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px">
+        <span style="width:16px;color:${isAns?'#2ecc71':'#aaa'};font-weight:bold">${String.fromCharCode(65+i)}</span>
+        <div style="flex:1;position:relative;height:18px;background:#222;border-radius:4px;overflow:hidden">
+          <i style="position:absolute;left:0;top:0;height:100%;width:${w}%;background:${isAns?'#2ecc71':'#555'};border-radius:4px;transition:width .4s"></i>
+          <span style="position:absolute;left:6px;top:1px;color:#fff;font-size:11px">${esc(opt)}</span>
+        </div>
+        <span style="color:${isAns?'#2ecc71':'#aaa'};font-weight:bold;min-width:40px;text-align:right">${cnt}人${isAns?' ✓':''}</span>
       </div>`;
     });
-    html += `<div class="stat-item" style="border-left:3px solid ${barColor}">
+    html += `<div class="stat-item" style="border-left:3px solid ${barColor};margin:8px 0;padding:8px;background:rgba(255,255,255,.03);border-radius:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="stat-q">第${s.qNum}题 · 正确率 <b style="color:${barColor}">${pct}%</b>（${s.correct}/${s.asked}）</div>
+        <div class="stat-q" style="font-size:14px">第${s.qNum}题</div>
+        <div style="font-size:13px">正确率 <b style="color:${barColor}">${pct}%</b> <span style="color:#888;font-size:11px">(${s.correct}/${s.asked})</span></div>
       </div>
-      <div style="height:5px;background:#222;border-radius:3px;margin:4px 0"><i style="display:block;height:100%;width:${pct}%;background:${barColor};border-radius:3px"></i></div>
-      <div class="stat-t" style="font-size:12px">${esc(s.q)}</div>
+      <div style="height:5px;background:#222;border-radius:3px;margin:4px 0"><i style="display:block;height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .4s"></i></div>
+      <div class="stat-t" style="font-size:12px;color:#bbb;margin-bottom:6px">${esc(s.q)}</div>
       ${optsHtml}
     </div>`;
   });
   html += '</div>';
-  sec.innerHTML = html;
+  // 游戏中：主持人端实时显示
+  const hs = document.getElementById('hostStatsSection');
+  if (hs) { hs.style.display = 'block'; hs.innerHTML = html; }
+  // 结算页：也显示
+  const rs = document.getElementById('statsSection');
+  if (rs) { rs.style.display = 'block'; rs.innerHTML = html; }
 }
 function confetti() {
   const colors = ['#ffd700','#ff6b6b','#2ecc71','#3498db','#ff7f50','#9b59b6'];
