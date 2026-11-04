@@ -528,7 +528,7 @@ function handleMsg(ws, msg) {
         t.hp = t.maxHp;
         t.alive = t.members.length > 0;
       });
-      state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; p.streak = 0; });
+      state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; p.streak = 0; p.qNum = -1; p.done = false; p.answered = false; p.pendingTarget = false; p.answerTimer = null; });
       state.curIdx = 0;
       state.qNum = -1; // 首题为第 1 题
       state.log = [];
