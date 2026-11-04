@@ -206,6 +206,17 @@ function sendQuestion(p) {
   p.picked = false;
   p.answered = false; // 允许答下一题
   p.pendingTarget = false;
+  // 答题超时：时间到未答 → 视为未答，扣本队血，自动下一题
+  clearTimeout(p.answerTimer);
+  p.answerTimer = setTimeout(() => {
+    if (p.done || p.answered) return;
+    p.answered = true;
+    p.streak = 0;
+    const t = teamOf(p);
+    if (t && t.alive) damageTeam(t, WRONG_PENALTY, `${p.name} 未作答，${t.name} -${WRONG_PENALTY}`);
+    sendHost(hostState());
+    advanceAfterAction(p, { correct: false, action: { type: 'timeout', penalty: WRONG_PENALTY } });
+  }, ROUND_TIME_MS);
   sendTo(p.id, {
     type: 'player_question', qNum: p.qNum + 1, total: QUESTIONS.length,
     question: q.q, img: q.img, options: q.options,
@@ -446,6 +457,7 @@ function handleMsg(ws, msg) {
       const chosenIdx = q.options.indexOf(msg.choice);
       if (chosenIdx < 0) return;
       p.answered = true;
+      clearTimeout(p.answerTimer);
       const correct = chosenIdx === q.answer;
       const elapsed = Date.now() - (p.answerStart || Date.now());
       const fast = elapsed <= ROUND_TIME_MS * FAST_RATIO;

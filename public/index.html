@@ -585,7 +585,7 @@ function revealAction(msg) {
   let txt = msg.correct ? `✅ 答对了！` : `❌ 答错了！正确答案：<b>${msg.answer}</b>`;
   const a = msg.action;
   if (a) {
-    if (a.type === 'wrong') txt += `<br>💥 本队受到 ${a.penalty} 点惩罚伤害`;
+    if (a.type === 'wrong' || a.type === 'timeout') txt += `<br>${a.type==='timeout'?'⏰':'💥'} 未作答/答错，本队受到 ${a.penalty} 点伤害`;
     else if (a.type === 'attack') txt += `<br>⚔️ 你对 <b style="color:#ff6b6b">${a.targetName}</b> 造成 <b>${a.damage}</b> 伤害${a.streak>=2?`（连对 ${a.streak} 次）`:''}${a.fast?' ⚡快答+8':''}`;
     else if (a.type === 'shield') txt += `<br>🛡️ 你为全队加了护盾（减免下一次伤害 ${a.reduction}%）${a.streak>=2?`（连对 ${a.streak} 次）`:''}`;
   }
