@@ -436,13 +436,9 @@ function heroSVG(type, color, avatarUrl) {
   // 脸部：有头像就用图片，圆形裁剪，五官居中
   function face(cx, cy, r) {
     if (avatarUrl) {
-      // 图片放大1.3倍，向下偏移15%，让五官区域落在圆形中央
-      const imgSize = r * 2.4;
-      const imgX = cx - imgSize/2;
-      const imgY = cy - imgSize/2 + r * 0.2;
       return `<defs><clipPath id="fc${uid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffd9b3"/>
-        <image href="${avatarUrl}" x="${imgX}" y="${imgY}" width="${imgSize}" height="${imgSize}" clip-path="url(#fc${uid})" preserveAspectRatio="xMidYMid slice"/>`;
+        <image href="${avatarUrl}" x="${cx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" clip-path="url(#fc${uid})" preserveAspectRatio="xMidYMid slice"/>`;
     }
     return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffd9b3"/>`;
   }
