@@ -334,16 +334,12 @@ function checkEnd() {
 // 汇总错题统计（按答错次数从高到低）
 function buildStats() {
   return Object.values(state.stats)
-    .map(s => {
-      const wrong = s.asked - s.correct;
-      return {
-        qNum: s.qNum, q: s.q, asked: s.asked, correct: s.correct, wrong,
-        wrongList: Object.keys(s.wrongOptions)
-          .map(k => ({ idx: +k, count: s.wrongOptions[k] }))
-          .sort((a, b) => b.count - a.count)
-      };
-    })
-    .sort((a, b) => b.wrong - a.wrong);
+    .map(s => ({
+      qNum: s.qNum, q: s.q, options: s.options, answer: s.answer,
+      asked: s.asked, correct: s.correct, wrong: s.asked - s.correct,
+      perOption: s.perOption || {}
+    }))
+    .sort((a, b) => a.qNum - b.qNum);
 }
 
 function endGame() {
@@ -463,13 +459,14 @@ function handleMsg(ws, msg) {
       const fast = elapsed <= ROUND_TIME_MS * FAST_RATIO;
       const t = teamOf(p);
       // 统计
-      const st = (state.stats[p.qNum] = state.stats[p.qNum] || { qNum: p.qNum + 1, q: q.q, asked: 0, correct: 0, wrongOptions: {} });
+      const st = (state.stats[p.qNum] = state.stats[p.qNum] || { qNum: p.qNum + 1, q: q.q, options: q.options, answer: q.answer, asked: 0, correct: 0, perOption: {} });
       st.asked++;
+      st.perOption[chosenIdx] = (st.perOption[chosenIdx] || 0) + 1;
       if (!correct) {
-        st.wrongOptions[chosenIdx] = (st.wrongOptions[chosenIdx] || 0) + 1;
         p.streak = 0;
         if (t && t.alive) damageTeam(t, WRONG_PENALTY, `${p.name} 答错，${t.name} -${WRONG_PENALTY}`);
         sendHost(hostState());
+        sendHost({ type: 'answer_stats', stats: buildStats() });
         advanceAfterAction(p, { correct: false, action: { type: 'wrong', penalty: WRONG_PENALTY } });
       } else {
         st.correct++;
@@ -489,6 +486,7 @@ function handleMsg(ws, msg) {
         // 自动结算（慢答攻击手/盾牌手）
         const act = applyAction(p, fast, null);
         sendHost(hostState());
+        sendHost({ type: 'answer_stats', stats: buildStats() });
         advanceAfterAction(p, { correct: true, action: act });
       }
       break;

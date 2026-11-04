@@ -731,18 +731,29 @@ function showResult(msg) {
 }
 function renderStats(stats) {
   const sec = document.getElementById('statsSection');
-  const bad = stats.filter(s => s.wrong > 0);
   sec.style.display = 'block';
-  if (!bad.length) { sec.innerHTML = '<div class="stat-block"><b>📊 错题回顾</b><div class="stat-none">本局全员全对，无错题 🎉</div></div>'; return; }
-  let html = '<div class="stat-block"><b>📊 错题回顾（按答错次数排序）</b>';
-  bad.slice(0, 10).forEach(s => {
-    const wrongOpts = s.wrongList.length
-      ? s.wrongList.map(w => `<span class="stat-opt">选项${String.fromCharCode(65 + w.idx)} 错选${w.count}次</span>`).join('')
-      : '';
-    html += `<div class="stat-item">
-      <div class="stat-q">第${s.qNum}题 · 答错 <b style="color:#e74c3c">${s.wrong}</b> 次（答对${s.correct}/${s.asked}）</div>
-      <div class="stat-t">${esc(s.q)}</div>
-      ${wrongOpts?`<div class="stat-opts">${wrongOpts}</div>`:''}
+  if (!stats || !stats.length) { sec.innerHTML = '<div class="stat-block"><b>📊 答题统计</b><div class="stat-none">暂无数据</div></div>'; return; }
+  let html = '<div class="stat-block"><b>📊 实时答题统计（每题正确率 & 各选项人数）</b>';
+  stats.forEach(s => {
+    const pct = s.asked ? Math.round(s.correct / s.asked * 100) : 0;
+    const barColor = pct >= 70 ? '#2ecc71' : pct >= 40 ? '#f39c12' : '#e74c3c';
+    let optsHtml = '';
+    (s.options || []).forEach((opt, i) => {
+      const cnt = (s.perOption && s.perOption[i]) || 0;
+      const isAns = i === s.answer;
+      optsHtml += `<div style="display:flex;align-items:center;gap:6px;margin:2px 0;font-size:12px">
+        <span style="width:16px;color:${isAns?'#2ecc71':'#aaa'}">${String.fromCharCode(65+i)}</span>
+        <span style="flex:1;color:#ccc">${esc(opt)}</span>
+        <span style="color:${isAns?'#2ecc71':'#aaa'};font-weight:bold">${cnt}人${isAns?' ✓':''}</span>
+      </div>`;
+    });
+    html += `<div class="stat-item" style="border-left:3px solid ${barColor}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="stat-q">第${s.qNum}题 · 正确率 <b style="color:${barColor}">${pct}%</b>（${s.correct}/${s.asked}）</div>
+      </div>
+      <div style="height:5px;background:#222;border-radius:3px;margin:4px 0"><i style="display:block;height:100%;width:${pct}%;background:${barColor};border-radius:3px"></i></div>
+      <div class="stat-t" style="font-size:12px">${esc(s.q)}</div>
+      ${optsHtml}
     </div>`;
   });
   html += '</div>';
