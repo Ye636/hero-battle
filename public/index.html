@@ -141,7 +141,8 @@
   .hero-warrior.attack{animation:attackLunge .6s ease-out}
   .hero-mage{animation:idleBob 2.4s ease-in-out infinite, castGlow 1.8s ease-in-out infinite}
   .hero-shield{animation:shieldRaise 1.6s ease-in-out infinite}
-  .hero-svg{width:120px;height:140px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5))}
+  .hero-svg{width:120px;height:140px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5));image-rendering:pixelated}
+  .hero-svg svg{width:100%;height:100%;shape-rendering:crispEdges}
   .hero-svg svg{width:100%;height:100%}
   @keyframes walkCycle{0%,100%{transform:translateY(0) rotate(-1deg)}25%{transform:translateY(-3px) rotate(1deg)}50%{transform:translateY(0)}75%{transform:translateY(-3px) rotate(-1deg)}}
   @keyframes staffSpin{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
@@ -387,67 +388,68 @@ let mySkill = ROLE_INFO[myRole];
 // SVG 虚拟人物角色（动漫画风，头像嵌入）
 function heroSVG(type, color, avatarUrl) {
   const c = color || '#aaa';
-  const avatar = avatarUrl ? `<image href="${avatarUrl}" x="38" y="28" width="24" height="24" clip-path="circle"/>` : '';
-  const face = avatar || `<circle cx="50" cy="40" r="11" fill="#ffe4c8"/><circle cx="46" cy="40" r="1.8" fill="#333"/><circle cx="54" cy="40" r="1.8" fill="#333"/><circle cx="44" cy="44" r="2" fill="#ffb6b6" opacity=".6"/><circle cx="56" cy="44" r="2" fill="#ffb6b6" opacity=".6"/>`;
+  const skin = '#ffd9b3';
+  const faceCls = avatarUrl
+    ? `<clipPath id="fc${Math.random().toString(36).slice(2,8)}"><rect x="38" y="28" width="24" height="22"/></clipPath><image href="${avatarUrl}" x="38" y="28" width="24" height="22" clip-path="url(#fc${Math.random().toString(36).slice(2,8)})"/>`
+    : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/><rect x="44" y="43" width="8" height="2" fill="#e74c3c"/>`;
   if (type === 'warrior') {
-    return `<svg viewBox="0 0 100 120">
-      <defs><clipPath id="cp${Date.now()}"><circle cx="50" cy="40" r="11"/></clipPath></defs>
+    return `<svg viewBox="0 0 100 120" shape-rendering="crispEdges">
       <g class="legs">
-        <rect x="40" y="88" width="9" height="24" rx="3" fill="#3a3a4a"/>
-        <rect x="51" y="88" width="9" height="24" rx="3" fill="#2a2a3a"/>
-        <ellipse cx="44" cy="113" rx="7" ry="3" fill="#222"/>
-        <ellipse cx="56" cy="113" rx="7" ry="3" fill="#222"/>
+        <rect x="40" y="92" width="8" height="20" fill="#333"/>
+        <rect x="52" y="92" width="8" height="20" fill="#222"/>
+        <rect x="38" y="110" width="12" height="6" fill="#111"/>
+        <rect x="50" y="110" width="12" height="6" fill="#111"/>
       </g>
-      <path d="M34 60 Q50 55 66 60 L68 90 Q50 96 32 90 Z" fill="${c}"/>
-      <path d="M34 60 Q50 55 66 60 L66 66 Q50 62 34 66 Z" fill="${c}" opacity=".6"/>
-      <rect x="42" y="70" width="16" height="10" rx="2" fill="#ffd700" opacity=".9"/>
-      ${face}
-      <path d="M36 34 Q50 20 64 34 L64 28 Q50 16 36 28 Z" fill="#c0c0d0"/>
-      <rect x="34" y="26" width="32" height="5" rx="2" fill="#e0e0f0"/>
+      <rect x="34" y="62" width="32" height="32" fill="${c}"/>
+      <rect x="34" y="62" width="32" height="6" fill="${c}" opacity=".7"/>
+      <rect x="44" y="72" width="12" height="8" fill="#ffd700"/>
+      <rect x="38" y="26" width="24" height="24" fill="${skin}"/>
+      ${avatarUrl ? faceCls : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/>`}
+      <rect x="36" y="20" width="28" height="8" fill="#aaa"/>
+      <rect x="34" y="16" width="32" height="6" fill="#ccc"/>
       <g class="weapon">
-        <rect x="80" y="42" width="3" height="38" fill="#c0c0d0" transform="rotate(12 82 60)"/>
-        <rect x="76" y="40" width="11" height="3" rx="1" fill="#ffd700" transform="rotate(12 82 60)"/>
+        <rect x="78" y="44" width="4" height="36" fill="#ddd"/>
+        <rect x="74" y="42" width="12" height="4" fill="#ffd700"/>
       </g>
-      <ellipse cx="30" cy="65" rx="5" ry="8" fill="${c}" opacity=".85"/>
+      <rect x="28" y="66" width="6" height="16" fill="${c}" opacity=".8"/>
     </svg>`;
   }
   if (type === 'mage') {
-    return `<svg viewBox="0 0 100 120">
+    return `<svg viewBox="0 0 100 120" shape-rendering="crispEdges">
       <g class="legs">
-        <path d="M38 88 L44 112 L50 112 L52 88 Z" fill="#4a3a6a"/>
-        <path d="M48 88 L50 112 L56 112 L62 88 Z" fill="#3a2a5a"/>
+        <rect x="40" y="92" width="8" height="20" fill="#4a3a6a"/>
+        <rect x="52" y="92" width="8" height="20" fill="#3a2a5a"/>
       </g>
-      <path d="M30 60 Q50 55 70 60 L76 112 Q50 118 24 112 Z" fill="${c}"/>
-      <path d="M30 60 Q50 55 70 60 L72 72 Q50 68 28 72 Z" fill="${c}" opacity=".7"/>
-      <circle cx="50" cy="40" r="11" fill="#ffe4c8"/>
-      ${avatarUrl ? `<clipPath id="mface${Date.now()}"><circle cx="50" cy="40" r="10"/></clipPath><image href="${avatarUrl}" x="40" y="30" width="20" height="20" clip-path="url(#mface${Date.now()})"/>` : `<circle cx="46" cy="40" r="1.8" fill="#333"/><circle cx="54" cy="40" r="1.8" fill="#333"/><circle cx="44" cy="44" r="2" fill="#ffb6b6" opacity=".6"/><circle cx="56" cy="44" r="2" fill="#ffb6b6" opacity=".6"/>`}
-      <path d="M34 36 L50 14 L66 36 L66 30 L50 20 L34 30 Z" fill="#6a4a8a"/>
-      <ellipse cx="50" cy="22" rx="22" ry="4" fill="#5a3a7a"/>
+      <polygon points="32,62 68,62 72,110 28,110" fill="${c}"/>
+      <polygon points="32,62 68,62 70,72 30,72" fill="${c}" opacity=".7"/>
+      <rect x="38" y="28" width="24" height="22" fill="${skin}"/>
+      ${avatarUrl ? faceCls : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/>`}
+      <polygon points="34,30 50,10 66,30" fill="#6a4a8a"/>
+      <rect x="30" y="28" width="40" height="5" fill="#5a3a7a"/>
       <g class="weapon">
-        <rect x="82" y="38" width="3" height="50" fill="#8a5a2a"/>
-        <circle cx="83" cy="34" r="7" fill="#9b59b6" opacity=".9">
-          <animate attributeName="r" values="6;8;6" dur="1.5s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="83" cy="34" r="3" fill="#fff" opacity=".8"/>
+        <rect x="80" y="40" width="4" height="50" fill="#8a5a2a"/>
+        <rect x="76" y="32" width="12" height="12" fill="#9b59b6">
+          <animate attributeName="opacity" values="1;.6;1" dur="1.5s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="79" y="35" width="6" height="6" fill="#fff"/>
       </g>
     </svg>`;
   }
   // shield
-  return `<svg viewBox="0 0 100 120">
+  return `<svg viewBox="0 0 100 120" shape-rendering="crispEdges">
       <g class="legs">
-        <rect x="38" y="88" width="10" height="24" rx="3" fill="#3a3a4a"/>
-        <rect x="52" y="88" width="10" height="24" rx="3" fill="#2a2a3a"/>
+        <rect x="40" y="92" width="8" height="20" fill="#333"/>
+        <rect x="52" y="92" width="8" height="20" fill="#222"/>
       </g>
-      <rect x="32" y="58" width="36" height="36" rx="6" fill="${c}"/>
-      <rect x="32" y="58" width="36" height="10" rx="4" fill="${c}" opacity=".6"/>
-      <circle cx="42" cy="66" r="2" fill="#fff" opacity=".4"/>
-      <circle cx="50" cy="40" r="11" fill="#ffe4c8"/>
-      ${avatarUrl ? `<clipPath id="sface${Date.now()}"><circle cx="50" cy="40" r="10"/></clipPath><image href="${avatarUrl}" x="40" y="30" width="20" height="20" clip-path="url(#sface${Date.now()})"/>` : `<circle cx="46" cy="40" r="1.8" fill="#333"/><circle cx="54" cy="40" r="1.8" fill="#333"/><circle cx="44" cy="44" r="2" fill="#ffb6b6" opacity=".6"/><circle cx="56" cy="44" r="2" fill="#ffb6b6" opacity=".6"/>`}
-      <path d="M35 32 Q50 20 65 32 L65 26 Q50 16 35 26 Z" fill="#888"/>
-      <rect x="33" y="24" width="34" height="6" rx="2" fill="#aaa"/>
-      <path d="M72 56 Q94 66 94 88 Q94 108 72 116 Q50 108 50 88 Q50 66 72 56 Z" fill="#f1c40f" stroke="#b8860b" stroke-width="2"/>
-      <path d="M72 62 Q88 72 88 88 Q88 104 72 110" fill="none" stroke="#fff" stroke-width="2" opacity=".4"/>
-      <circle cx="72" cy="78" r="3" fill="#fff" opacity=".6"/>
+      <rect x="34" y="60" width="32" height="34" fill="${c}"/>
+      <rect x="34" y="60" width="32" height="8" fill="${c}" opacity=".7"/>
+      <rect x="40" y="70" width="6" height="4" fill="#fff" opacity=".4"/>
+      <rect x="38" y="28" width="24" height="22" fill="${skin}"/>
+      ${avatarUrl ? faceCls : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/>`}
+      <rect x="34" y="20" width="32" height="8" fill="#888"/>
+      <rect x="32" y="16" width="36" height="6" fill="#aaa"/>
+      <path d="M74 58 L92 62 L92 96 L83 108 L74 96 Z" fill="#f1c40f" stroke="#b8860b" stroke-width="2"/>
+      <rect x="78" y="66" width="4" height="20" fill="#fff" opacity=".4"/>
     </svg>`;
 }
 function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
