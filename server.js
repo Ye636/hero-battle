@@ -115,13 +115,18 @@ function newTeam() {
   state.teams.push(t);
   return t;
 }
-// 自动分组：越分散越好 → 每次加入当前人数最少的未满队伍，满5人开新队
+// 自动分组：按进入顺序轮转 → 第1个红队、第2个蓝队、第3个黄队、第4个绿队、第5个红队…满5人跳下一队
 function pickTeam() {
-  let cands = state.teams
-    .filter(t => t.members.length < TEAM_SIZE)
-    .sort((a, b) => a.members.length - b.members.length);
-  if (cands.length === 0) return newTeam();
-  return cands[0];
+  let n = state.players.length; // 当前已有 n 人，即将加入第 n+1 个
+  // 还没建满 4 个队时，每来一人开新队（红/蓝/黄/绿）
+  if (state.teams.length === 0) return newTeam();
+  if (n < state.teams.length) return newTeam();
+  // 已有4队 → 按 n 轮转，找第一个未满5人的队
+  for (let i = 0; i < state.teams.length; i++) {
+    const t = state.teams[(n + i) % state.teams.length];
+    if (t.members.length < TEAM_SIZE) return t;
+  }
+  return newTeam();
 }
 function teamOf(p) { return state.teams[p.teamIdx] || null; }
 function teamAlive(idx) { return state.teams[idx] && state.teams[idx].alive; }
