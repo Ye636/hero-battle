@@ -115,11 +115,13 @@ function newTeam() {
   state.teams.push(t);
   return t;
 }
-// 自动分组：随机分配到未满5人的队伍，无则开新队
+// 自动分组：越分散越好 → 每次加入当前人数最少的未满队伍，满5人开新队
 function pickTeam() {
-  let cands = state.teams.filter(t => t.members.length < TEAM_SIZE);
-  if (!cands.length) return newTeam();
-  return cands[Math.floor(Math.random() * cands.length)];
+  let cands = state.teams
+    .filter(t => t.members.length < TEAM_SIZE)
+    .sort((a, b) => a.members.length - b.members.length);
+  if (cands.length === 0) return newTeam();
+  return cands[0];
 }
 function teamOf(p) { return state.teams[p.teamIdx] || null; }
 function teamAlive(idx) { return state.teams[idx] && state.teams[idx].alive; }
