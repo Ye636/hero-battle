@@ -430,32 +430,42 @@ const ROLE_INFO = {
   shield: { key:'shield', emoji:'🛡️', name:'盾牌手', color:'#f1c40f' }
 };
 let mySkill = ROLE_INFO[myRole];
-// 华丽2D角色（SVG + 动画）
+// 华丽2D角色（SVG + 动画），头像作为脸部
 function heroSVG(type, color, avatarUrl) {
   const c = color || '#888';
+  const uid = Math.random().toString(36).slice(2,8);
+  // 脸部：有头像就用图片，没有就用默认肤色圆
+  function face(cx, cy, r) {
+    if (avatarUrl) {
+      return `<defs><clipPath id="fc${uid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffd9b3"/>
+        <image href="${avatarUrl}" x="${cx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" clip-path="url(#fc${uid})" preserveAspectRatio="xMidYMid slice"/>`;
+    }
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffd9b3"/>`;
+  }
   if (type === 'warrior') {
     return `<svg viewBox="0 0 120 150" class="hero-2d" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="gBody${uid}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#ffd700"/><stop offset="1" stop-color="#b8860b"/>
         </linearGradient>
-        <linearGradient id="gSword" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id="gSword${uid}" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaa"/>
         </linearGradient>
       </defs>
       <ellipse cx="60" cy="145" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
       <g class="hero-body">
-        <circle cx="60" cy="35" r="16" fill="#ffd9b3"/>
+        ${face(60, 35, 15)}
         <path d="M44 30 Q60 15 76 30 L76 25 Q60 12 44 25 Z" fill="#c0c0c0"/>
         <circle cx="54" cy="35" r="2" fill="#222"/><circle cx="66" cy="35" r="2" fill="#222"/>
-        <path d="M48 50 L72 50 L76 90 L44 90 Z" fill="url(#gBody)"/>
+        <path d="M48 50 L72 50 L76 90 L44 90 Z" fill="url(#gBody${uid})"/>
         <rect x="55" y="50" width="10" height="40" fill="rgba(255,255,255,.2)"/>
         <path d="M44 55 L38 85 L44 90 L48 60 Z" fill="#c0c0c0"/>
         <path d="M76 55 L82 85 L76 90 L72 60 Z" fill="#c0c0c0"/>
         <rect x="48" y="90" width="10" height="35" fill="#333"/>
         <rect x="62" y="90" width="10" height="35" fill="#333"/>
         <g class="hero-weapon">
-          <rect x="80" y="55" width="4" height="45" fill="url(#gSword)" rx="2"/>
+          <rect x="80" y="55" width="4" height="45" fill="url(#gSword${uid})" rx="2"/>
           <rect x="76" y="52" width="12" height="4" fill="#8b4513" rx="1"/>
         </g>
         <path d="M44 55 Q30 70 28 100 L38 100 Q40 75 48 65 Z" fill="#c0392b"/>
@@ -465,23 +475,23 @@ function heroSVG(type, color, avatarUrl) {
   if (type === 'mage') {
     return `<svg viewBox="0 0 120 150" class="hero-2d" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="gRobe" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="gRobe${uid}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#9b59b6"/><stop offset="1" stop-color="#6c3483"/>
         </linearGradient>
-        <radialGradient id="gOrb" cx="0.5" cy="0.5" r="0.5">
+        <radialGradient id="gOrb${uid}" cx="0.5" cy="0.5" r="0.5">
           <stop offset="0" stop-color="#e8d5f5"/><stop offset="1" stop-color="#9b59b6"/>
         </radialGradient>
       </defs>
       <ellipse cx="60" cy="145" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
       <g class="hero-body">
-        <circle cx="60" cy="38" r="14" fill="#ffd9b3"/>
+        ${face(60, 38, 13)}
         <path d="M42 35 L60 10 L78 35 Z" fill="#6c3483"/>
         <circle cx="55" cy="38" r="2" fill="#222"/><circle cx="65" cy="38" r="2" fill="#222"/>
-        <path d="M46 52 L74 52 L80 110 L40 110 Z" fill="url(#gRobe)"/>
+        <path d="M46 52 L74 52 L80 110 L40 110 Z" fill="url(#gRobe${uid})"/>
         <path d="M50 52 L70 52 L66 110 L54 110 Z" fill="rgba(255,255,255,.1)"/>
         <g class="hero-weapon">
           <rect x="82" y="45" width="3" height="60" fill="#6b4a2a" rx="1"/>
-          <circle cx="83.5" cy="42" r="8" fill="url(#gOrb)" class="hero-orb"/>
+          <circle cx="83.5" cy="42" r="8" fill="url(#gOrb${uid})" class="hero-orb"/>
         </g>
       </g>
     </svg>`;
@@ -489,22 +499,22 @@ function heroSVG(type, color, avatarUrl) {
   // shield
   return `<svg viewBox="0 0 120 150" class="hero-2d" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="gArmor" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="gArmor${uid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#d0d0d0"/><stop offset="1" stop-color="#888"/>
       </linearGradient>
-      <linearGradient id="gShield" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="gShield${uid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#f1c40f"/><stop offset="1" stop-color="#b7950b"/>
       </linearGradient>
     </defs>
     <ellipse cx="60" cy="145" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
     <g class="hero-body">
-      <circle cx="60" cy="35" r="15" fill="#ffd9b3"/>
+      ${face(60, 35, 14)}
       <path d="M45 32 Q60 18 75 32 L75 27 Q60 15 45 27 Z" fill="#a0a0a0"/>
       <circle cx="54" cy="35" r="2" fill="#222"/><circle cx="66" cy="35" r="2" fill="#222"/>
-      <rect x="46" y="48" width="28" height="45" rx="4" fill="url(#gArmor)"/>
+      <rect x="46" y="48" width="28" height="45" rx="4" fill="url(#gArmor${uid})"/>
       <rect x="56" y="48" width="8" height="45" fill="rgba(255,255,255,.2)"/>
       <g class="hero-weapon">
-        <path d="M80 55 L95 55 L95 95 L87 105 L80 95 Z" fill="url(#gShield)" stroke="#8b6914" stroke-width="1.5"/>
+        <path d="M80 55 L95 55 L95 95 L87 105 L80 95 Z" fill="url(#gShield${uid})" stroke="#8b6914" stroke-width="1.5"/>
       </g>
       <rect x="48" y="93" width="10" height="32" fill="#444"/>
       <rect x="62" y="93" width="10" height="32" fill="#444"/>
@@ -597,11 +607,11 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   let allHeroes = [];
   const mySkillKey = (mySkill && mySkill.key) ? mySkill.key : 'warrior';
   const myColor = myTeam ? myTeam.color : '#888';
-  allHeroes.push({ hero: heroSVG(mySkillKey, myColor), name: myName || '我', color: myColor, isMe: true });
+  allHeroes.push({ hero: heroSVG(mySkillKey, myColor, myPhoto), name: myName || '我', color: myColor, isMe: true });
   teams.forEach((t, i) => {
     (t.members || []).forEach(m => {
       if (myTeam && i === myTeam.idx && m.name === myName) return;
-      allHeroes.push({ hero: heroSVG(m.skill || 'warrior', t.color), name: m.name, color: t.color, teamIdx: i });
+      allHeroes.push({ hero: heroSVG(m.skill || 'warrior', t.color, m.photo), name: m.name, color: t.color, teamIdx: i });
     });
   });
   box.innerHTML = allHeroes.map(h => {

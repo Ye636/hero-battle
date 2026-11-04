@@ -481,7 +481,7 @@ function handleMsg(ws, msg) {
     }
     case 'update_photo': {
       const p = playerFromId(ws.__id);
-      if (p) { p.photo = msg.photo; broadcast(lobbyUpdate()); sendHost(hostState()); broadcastTeams(); }
+      if (p && state.phase === 'lobby') { p.photo = msg.photo; broadcast(lobbyUpdate()); sendHost(hostState()); broadcastTeams(); }
       break;
     }
     case 'answer': {
