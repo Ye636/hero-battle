@@ -707,20 +707,24 @@ function showPickTarget(msg) {
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal show';
   rb.style.borderLeft = '4px solid #ff6b6b';
-  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！选择要攻击的队伍：</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px" id="pickBtns"></div>`;
-  const wrap = document.getElementById('pickBtns');
-  (msg.enemies || []).forEach(e => {
-    const b = document.createElement('button');
-    b.className = 'btn fx-pulse';
-    b.style.background = 'linear-gradient(135deg,' + e.color + ',#333)';
-    b.textContent = '⚔️ ' + e.name;
-    b.onclick = () => {
-      send({ type: 'attack_target', targetIdx: e.idx });
-      wrap.innerHTML = '<div style="color:#2ecc71">已选择攻击 ' + esc(e.name) + '，等待其他玩家...</div>';
-    };
-    wrap.appendChild(b);
-  });
+  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！点击下方其他队伍的角色进行攻击：</div>`;
+  // 让战场里的敌人角色可点击
+  const arena = document.getElementById('battleArena');
+  if (arena) {
+    (msg.enemies || []).forEach(e => {
+      const el = arena.querySelector(`[data-team="${e.idx}"]`);
+      if (el) {
+        el.style.cursor = 'pointer';
+        el.style.animation = 'pulse 0.8s infinite';
+        el.title = '点击攻击 ' + e.name;
+        el.onclick = () => {
+          send({ type: 'attack_target', targetIdx: e.idx });
+          rb.innerHTML = '<div style="color:#2ecc71">已选择攻击 ' + esc(e.name) + '，等待其他玩家...</div>';
+          arena.querySelectorAll('.arena-team').forEach(x => { x.style.cursor = ''; x.style.animation = ''; x.onclick = null; });
+        };
+      }
+    });
+  }
 }
 function revealAction(msg) {
   stopCountdown();
