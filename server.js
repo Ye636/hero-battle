@@ -261,7 +261,10 @@ function advanceAfterAction(p, result) {
 function teamsSnapshot() {
   return state.teams.map((t, i) => ({
     idx: i, name: t.name, color: t.color, hp: t.hp, maxHp: t.maxHp || t.hp, alive: t.alive,
-    members: t.members.map(m => ({ name: m.name, skill: m.skill ? m.skill.key : 'warrior', photo: m.photo || '' }))
+    members: t.members.map(pid => {
+      const p = state.players.find(x => x.id === pid);
+      return p ? { name: p.name, skill: p.skill ? p.skill.key : 'warrior', photo: p.photo || '' } : { name: '?', skill: 'warrior', photo: '' };
+    })
   }));
 }
 

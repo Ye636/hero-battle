@@ -372,6 +372,7 @@ let myPlayerId = null;
 let myTeam = null;
 let myPhoto = null;
 let myName = '';
+let cachedTeams = [];
 let cdTimer = null;
 let cdEnd = 0;
 
@@ -559,6 +560,7 @@ function stopCountdown() { if (cdTimer) clearInterval(cdTimer); cdTimer = null; 
 
 // ===== 队伍血条条（学生作答顶部）=====
 function renderTeamStrip(teams) {
+  cachedTeams = teams || [];
   const box = document.getElementById('teamStrip');
   if (!teams || !teams.length) { box.innerHTML = ''; return; }
   box.innerHTML = teams.map(t => {
@@ -697,6 +699,7 @@ function showQuestion(msg) {
     </div>` +
     (msg.img ? `<div style="font-size:40px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
   initAll3D();
+  renderBattleArena(cachedTeams);
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
   msg.options.forEach((opt, i) => {
@@ -721,7 +724,7 @@ function showPickTarget(msg) {
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal show';
   rb.style.borderLeft = '4px solid #ff6b6b';
-  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！点击下方其他队伍的角色进行攻击：</div>`;
+  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！点击上方其他队伍的角色进行攻击：</div>`;
   // 让战场里的敌人角色可点击
   const arena = document.getElementById('battleArena');
   if (arena) {
