@@ -108,6 +108,14 @@ function broadcast(obj) {
 function sendHost(obj) {
   if (state.hostId != null) sendTo(state.hostId, obj);
 }
+function broadcastTeams() {
+  const teams = state.teams.map((t, i) => ({
+    idx: i, name: t.name, color: t.color, hp: Math.max(0, t.hp), maxHp: t.maxHp, alive: t.alive,
+    shield: state.shields[i] ? state.shields[i].reduction : 0,
+    members: t.members.length
+  }));
+  broadcast({ type: 'teams_update', teams });
+}
 function newTeam() {
   const i = state.teams.length;
   const base = TEAM_POOL[i % TEAM_POOL.length];
@@ -198,6 +206,7 @@ function sendQuestion(p) {
     p.done = true;
     sendTo(p.id, { type: 'player_done' });
     sendHost(hostState());
+    broadcastTeams();
     checkAllDone();
     return;
   }
@@ -215,6 +224,7 @@ function sendQuestion(p) {
     const t = teamOf(p);
     if (t && t.alive) damageTeam(t, WRONG_PENALTY, `${p.name} 未作答，${t.name} -${WRONG_PENALTY}`);
     sendHost(hostState());
+    broadcastTeams();
     advanceAfterAction(p, { correct: false, action: { type: 'timeout', penalty: WRONG_PENALTY } });
   }, ROUND_TIME_MS);
   sendTo(p.id, {
@@ -223,6 +233,7 @@ function sendQuestion(p) {
     roundTime: ROUND_TIME_MS / 1000
   });
   sendHost(hostState());
+  broadcastTeams();
 }
 
 // 所有人都答完 → 结算
@@ -394,6 +405,7 @@ function handleMsg(ws, msg) {
       state.hostId = ws.__id;
       sendHost(lobbyUpdate());
       sendHost(hostState());
+      broadcastTeams();
       break;
     }
     case 'join': {
@@ -420,6 +432,7 @@ function handleMsg(ws, msg) {
       });
       broadcast(lobbyUpdate());
       sendHost(hostState());
+      broadcastTeams();
       break;
     }
     case 'start_game': {
@@ -466,6 +479,7 @@ function handleMsg(ws, msg) {
         p.streak = 0;
         if (t && t.alive) damageTeam(t, WRONG_PENALTY, `${p.name} 答错，${t.name} -${WRONG_PENALTY}`);
         sendHost(hostState());
+      broadcastTeams();
         sendHost({ type: 'answer_stats', stats: buildStats() });
         advanceAfterAction(p, { correct: false, action: { type: 'wrong', penalty: WRONG_PENALTY } });
       } else {
@@ -486,6 +500,7 @@ function handleMsg(ws, msg) {
         // 自动结算（慢答攻击手/盾牌手）
         const act = applyAction(p, fast, null);
         sendHost(hostState());
+      broadcastTeams();
         sendHost({ type: 'answer_stats', stats: buildStats() });
         advanceAfterAction(p, { correct: true, action: act });
       }
@@ -499,6 +514,7 @@ function handleMsg(ws, msg) {
       const fast = true; // 选目标的都是快答对
       const act = applyAction(p, fast, msg.targetIdx);
       sendHost(hostState());
+      broadcastTeams();
       advanceAfterAction(p, { correct: true, action: act });
       break;
     }
@@ -524,6 +540,7 @@ function handleMsg(ws, msg) {
       broadcast({ type: 'game_reset' });
       broadcast(lobbyUpdate());
       sendHost(hostState());
+      broadcastTeams();
       break;
     }
     default:
