@@ -441,7 +441,6 @@ function handleMsg(ws, msg) {
     }
     case 'start_game': {
       if (ws.__id !== state.hostId) { sendTo(ws.__id, { type: 'error', msg: '只有主持人能开始游戏' }); return; }
-      if (state.phase !== 'lobby') return;
       if (state.players.length < 1) { sendTo(ws.__id, { type: 'error', msg: '还没有玩家加入，稍等片刻' }); return; }
       state.teams.forEach(t => {
         t.maxHp = t.members.length * PERSON_HP;
