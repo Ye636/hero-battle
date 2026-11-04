@@ -621,7 +621,7 @@ function handleMsg(msg) {
           `<div class="player-chip">${p.photo?`<img src="${p.photo}">`:''} ${esc(p.name)}</div>`).join('');
         document.getElementById('teamsPreview').innerHTML = (msg.teams || []).map(t =>
           `<div class="team-prev" style="border-color:${t.color}"><b style="color:${t.color}">${t.name}</b><div class="cnt">${t.members.length} 人</div></div>`).join('');
-        document.getElementById('startGameBtn').disabled = msg.players.length < 1;
+        document.getElementById('startGameBtn').disabled = false;
         document.getElementById('startGameBtn').textContent = msg.phase === 'lobby' ? '⚔️ 开始战斗！' : '🔄 重新开始';
         document.getElementById('stopGameBtn').style.display = msg.phase === 'playing' ? 'inline-block' : 'none';
       }
