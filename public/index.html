@@ -349,7 +349,7 @@
       <div class="cd-num" id="hcdNum"></div>
     </div>
     <div class="host-log" id="hostLog"></div>
-    <div id="hostStatsSection" style="display:none;margin-top:16px"></div>
+    <div id="hostStatsSection" style="margin-top:16px"></div>
   </div>
 
   <!-- ===== 结算 ===== -->
@@ -970,7 +970,11 @@ function showResult(msg) {
   document.getElementById('replayBtn').style.display = isHost ? 'inline-block' : 'none';
 }
 function renderStats(stats) {
-  if (!stats || !stats.length) return;
+  if (!stats || !stats.length) {
+    const hs = document.getElementById('hostStatsSection');
+    if (hs && !hs.innerHTML) hs.innerHTML = '<div style="color:#888;font-size:13px;text-align:center">等待玩家答题数据...</div>';
+    return;
+  }
   let html = '<div class="stat-block"><b>📊 各题正确率与选项选择详情</b>';
   stats.forEach(s => {
     const pct = s.asked ? Math.round(s.correct / s.asked * 100) : 0;
