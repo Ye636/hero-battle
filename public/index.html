@@ -728,6 +728,7 @@ function lockIn(idx, box) {
   send({ type:'answer', choice: box.querySelectorAll('.option-btn')[idx].textContent.slice(3).trim() });
 }
 function showPickTarget(msg) {
+  stopCountdown();
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal show';
   rb.style.borderLeft = '4px solid #ff6b6b';
