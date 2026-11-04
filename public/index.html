@@ -939,6 +939,21 @@ function showResult(msg) {
     </div>`;
   });
   html += '</div>';
+  // 个人榜 Top 5
+  if (msg.top5 && msg.top5.length) {
+    html += '<p style="text-align:center;color:#ffd700;margin:16px 0 8px">⭐ 最快最强大脑 Top 5</p>';
+    html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
+    msg.top5.forEach(p => {
+      const medal = ['🥇','🥈','🥉','4️⃣','5️⃣'][p.rank-1] || p.rank;
+      html += `<div style="min-width:120px;padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.05));border:2px solid #ffd700;text-align:center">
+        <div style="font-size:24px">${medal}</div>
+        <div style="font-weight:bold;color:#fff;margin:4px 0">${esc(p.name)}</div>
+        <div style="font-size:12px;color:#ffd700">答对 ${p.correct} 题</div>
+        <div style="font-size:11px;color:#aaa">${p.teamName} · ${p.skill.emoji}${p.skill.name}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
   html += '<p style="text-align:center;color:#ffd700;margin:10px 0">📋 个人正确率榜</p>';
   (msg.ranking || []).slice(0, 8).forEach((r, i) => {
     const medal = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'][i] || (i+1)+'️⃣';
@@ -956,7 +971,7 @@ function showResult(msg) {
 }
 function renderStats(stats) {
   if (!stats || !stats.length) return;
-  let html = '<div class="stat-block"><b>📊 各题正确率与选项选择人数</b>';
+  let html = '<div class="stat-block"><b>📊 各题正确率与选项选择详情</b>';
   stats.forEach(s => {
     const pct = s.asked ? Math.round(s.correct / s.asked * 100) : 0;
     const barColor = pct >= 70 ? '#2ecc71' : pct >= 40 ? '#f39c12' : '#e74c3c';
@@ -966,6 +981,8 @@ function renderStats(stats) {
       const maxCnt = Math.max(...(s.options || []).map((_, j) => (s.perOption && s.perOption[j]) || 0), 1);
       const isAns = i === s.answer;
       const w = Math.round(cnt / maxCnt * 100);
+      // 谁选了这个选项
+      const who = (s.players || []).filter(p => p.choice === i).map(p => p.name).join('、');
       optsHtml += `<div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px">
         <span style="width:16px;color:${isAns?'#2ecc71':'#aaa'};font-weight:bold">${String.fromCharCode(65+i)}</span>
         <div style="flex:1;position:relative;height:18px;background:#222;border-radius:4px;overflow:hidden">
@@ -974,6 +991,7 @@ function renderStats(stats) {
         </div>
         <span style="color:${isAns?'#2ecc71':'#aaa'};font-weight:bold;min-width:40px;text-align:right">${cnt}人${isAns?' ✓':''}</span>
       </div>`;
+      if (who) optsHtml += `<div style="font-size:10px;color:#888;margin-left:22px;margin-bottom:2px">${esc(who)}</div>`;
     });
     html += `<div class="stat-item" style="border-left:3px solid ${barColor};margin:8px 0;padding:8px;background:rgba(255,255,255,.03);border-radius:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -986,10 +1004,8 @@ function renderStats(stats) {
     </div>`;
   });
   html += '</div>';
-  // 游戏中：主持人端实时显示
   const hs = document.getElementById('hostStatsSection');
   if (hs) { hs.style.display = 'block'; hs.innerHTML = html; }
-  // 结算页：也显示
   const rs = document.getElementById('statsSection');
   if (rs) { rs.style.display = 'block'; rs.innerHTML = html; }
 }

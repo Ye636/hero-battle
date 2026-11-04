@@ -349,13 +349,13 @@ function checkEnd() {
   return false;
 }
 
-// 汇总错题统计（按答错次数从高到低）
+// 汇总统计（含每人每选项详情）
 function buildStats() {
   return Object.values(state.stats)
     .map(s => ({
       qNum: s.qNum, q: s.q, options: s.options, answer: s.answer,
       asked: s.asked, correct: s.correct, wrong: s.asked - s.correct,
-      perOption: s.perOption || {}
+      perOption: s.perOption || {}, players: s.players || []
     }))
     .sort((a, b) => a.qNum - b.qNum);
 }
@@ -376,7 +376,19 @@ function endGame() {
       name: p.name, photo: p.photo, correct: p.correct, total: QUESTIONS.length,
       teamName: teamOf(p) ? teamOf(p).name : '', skill: p.skill
     }));
-  broadcast({ type: 'game_end', teamRank, ranking });
+  // 个人榜：答对题数 + 速度（答对越快排名越高）
+  const top5 = state.players
+    .slice()
+    .sort((a, b) => {
+      if ((b.correct || 0) !== (a.correct || 0)) return (b.correct || 0) - (a.correct || 0);
+      return (a.totalTime || 0) - (b.totalTime || 0);
+    })
+    .slice(0, 5)
+    .map((p, i) => ({
+      rank: i + 1, name: p.name, photo: p.photo, correct: p.correct || 0,
+      teamName: teamOf(p) ? teamOf(p).name : '', skill: p.skill
+    }));
+  broadcast({ type: 'game_end', teamRank, ranking, top5 });
   sendHost({ type: 'answer_stats', stats: buildStats() });
   sendHost(hostState());
 }
@@ -444,13 +456,12 @@ function handleMsg(ws, msg) {
     }
     case 'start_game': {
       if (ws.__id !== state.hostId) { sendTo(ws.__id, { type: 'error', msg: '只有主持人能开始游戏' }); return; }
-      if (state.players.length < 1) { sendTo(ws.__id, { type: 'error', msg: '还没有玩家加入，稍等片刻' }); return; }
       state.teams.forEach(t => {
         t.maxHp = t.members.length * PERSON_HP;
         t.hp = t.maxHp;
         t.alive = t.members.length > 0;
       });
-      state.players.forEach(p => { p.streak = 0; p.qNum = -1; p.done = false; p.answerStart = 0; p.answered = false; p.pendingTarget = false; });
+      state.players.forEach(p => { p.streak = 0; p.qNum = -1; p.done = false; p.answerStart = 0; p.answered = false; p.pendingTarget = false; p.totalTime = 0; });
       state.phase = 'playing';
       state.qNum = -1;
       state.log = [];
@@ -477,12 +488,14 @@ function handleMsg(ws, msg) {
       clearTimeout(p.answerTimer);
       const correct = chosenIdx === q.answer;
       const elapsed = Date.now() - (p.answerStart || Date.now());
+      p.totalTime = (p.totalTime || 0) + elapsed;
       const fast = elapsed <= ROUND_TIME_MS * FAST_RATIO;
       const t = teamOf(p);
       // 统计
-      const st = (state.stats[p.qNum] = state.stats[p.qNum] || { qNum: p.qNum + 1, q: q.q, options: q.options, answer: q.answer, asked: 0, correct: 0, perOption: {} });
+      const st = (state.stats[p.qNum] = state.stats[p.qNum] || { qNum: p.qNum + 1, q: q.q, options: q.options, answer: q.answer, asked: 0, correct: 0, perOption: {}, players: [] });
       st.asked++;
       st.perOption[chosenIdx] = (st.perOption[chosenIdx] || 0) + 1;
+      st.players.push({ name: p.name, choice: chosenIdx, correct, elapsed });
       if (!correct) {
         p.streak = 0;
         if (t && t.alive) damageTeam(t, WRONG_PENALTY, `${p.name} 答错，${t.name} -${WRONG_PENALTY}`);
