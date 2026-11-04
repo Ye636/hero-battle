@@ -349,15 +349,16 @@ function checkEnd() {
   return false;
 }
 
-// 汇总统计（含每人每选项详情）
+// 汇总统计：列出全部24题，已答的有数据，未答的显示0
 function buildStats() {
-  return Object.values(state.stats)
-    .map(s => ({
-      qNum: s.qNum, q: s.q, options: s.options, answer: s.answer,
-      asked: s.asked, correct: s.correct, wrong: s.asked - s.correct,
+  return QUESTIONS.map((q, idx) => {
+    const s = state.stats[idx] || {};
+    return {
+      qNum: idx + 1, q: q.q, options: q.options, answer: q.answer,
+      asked: s.asked || 0, correct: s.correct || 0, wrong: (s.asked || 0) - (s.correct || 0),
       perOption: s.perOption || {}, players: s.players || []
-    }))
-    .sort((a, b) => a.qNum - b.qNum);
+    };
+  });
 }
 
 function endGame() {
@@ -473,6 +474,7 @@ function handleMsg(ws, msg) {
       broadcast({ type: 'game_started' });
       broadcast(lobbyUpdate());
       broadcastTeams();
+      sendHost({ type: 'answer_stats', stats: buildStats() });
       // 给每个玩家发第一题（即使只有1队也能跑，攻击无目标时自动跳过）
       state.players.forEach(p => sendQuestion(p));
       break;

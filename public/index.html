@@ -975,7 +975,7 @@ function renderStats(stats) {
     if (hs && !hs.innerHTML) hs.innerHTML = '<div style="color:#888;font-size:13px;text-align:center">等待玩家答题数据...</div>';
     return;
   }
-  let html = '<div class="stat-block"><b>📊 各题正确率与选项选择详情</b>';
+  let html = '<div class="stat-block"><b>📊 各题正确率与选项选择详情（实时更新）</b>';
   stats.forEach(s => {
     const pct = s.asked ? Math.round(s.correct / s.asked * 100) : 0;
     const barColor = pct >= 70 ? '#2ecc71' : pct >= 40 ? '#f39c12' : '#e74c3c';
