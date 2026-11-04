@@ -118,11 +118,10 @@ function newTeam() {
 }
 // 自动分组：按进入顺序轮转 → 第1个红队、第2个蓝队、第3个黄队、第4个绿队、第5个红队…满5人跳下一队
 function pickTeam() {
-  let n = state.players.length; // 当前已有 n 人，即将加入第 n+1 个
-  // 还没建满 4 个队时，每来一人开新队（红/蓝/黄/绿）
-  if (state.teams.length === 0) return newTeam();
-  if (n < state.teams.length) return newTeam();
-  // 已有4队 → 按 n 轮转，找第一个未满5人的队
+  // 还没建满 4 个基础队时，每来一人开新队（红/蓝/黄/绿）
+  if (state.teams.length < TEAM_POOL.length) return newTeam();
+  // 已有4队 → 按进入顺序轮转：第5个回红、第6个回蓝…
+  const n = state.players.length;
   for (let i = 0; i < state.teams.length; i++) {
     const t = state.teams[(n + i) % state.teams.length];
     if (t.members.length < TEAM_SIZE) return t;
