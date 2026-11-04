@@ -132,7 +132,15 @@
   .float-txt{position:fixed;left:50%;top:40%;transform:translateX(-50%);font-size:42px;font-weight:900;pointer-events:none;z-index:999;animation:floatUp 1.2s ease-out forwards}
   .fireball{position:fixed;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#ffd700,#ff4500);box-shadow:0 0 20px #ff4500;z-index:999;pointer-events:none;animation:fireball .7s ease-out forwards}
   /* 角色动画形象 */
-  .hero-sprite{display:inline-block;font-size:56px;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));position:relative}
+  .hero-sprite{display:inline-block;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));position:relative}
+  .hero-2d{width:100px;height:125px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5));animation:heroIdle 2s ease-in-out infinite}
+  @keyframes heroIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .hero-2d.hero-attack .hero-body{animation:heroAttack .8s ease-out}
+  @keyframes heroAttack{0%{transform:translateX(0) rotate(0)}40%{transform:translateX(25px) rotate(8deg)}60%{transform:translateX(20px) rotate(5deg)}100%{transform:translateX(0) rotate(0)}}
+  .hero-2d.hero-shield .hero-body{animation:heroShield 2.5s ease-out}
+  @keyframes heroShield{0%{transform:scale(1)}30%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .hero-orb{animation:orbGlow 1.5s ease-in-out infinite}
+  @keyframes orbGlow{0%,100%{filter:drop-shadow(0 0 4px #9b59b6)}50%{filter:drop-shadow(0 0 16px #9b59b6)}}
   @keyframes idleBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
   @keyframes attackLunge{0%,100%{transform:translateX(0)}40%{transform:translateX(20px) scale(1.15)}60%{transform:translateX(18px) scale(1.1)}}
   @keyframes castGlow{0%,100%{filter:drop-shadow(0 0 4px #9b59b6)}50%{filter:drop-shadow(0 0 18px #9b59b6) brightness(1.4)}}
@@ -386,138 +394,94 @@ const ROLE_INFO = {
   shield: { key:'shield', emoji:'🛡️', name:'盾牌手', color:'#f1c40f' }
 };
 let mySkill = ROLE_INFO[myRole];
-// 3D 立体角色（圆润几何体，精致造型）
-function init3D(canvas, type, color) {
-  const w = canvas.clientWidth || 120, h = canvas.clientHeight || 140;
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setSize(w, h, false);
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
-  camera.position.set(0, 1.6, 5);
-  camera.lookAt(0, 1, 0);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-  const key = new THREE.DirectionalLight(0xffffff, 0.9);
-  key.position.set(2, 4, 3);
-  scene.add(key);
-  const rim = new THREE.DirectionalLight(0x8888ff, 0.3);
-  rim.position.set(-2, 2, -2);
-  scene.add(rim);
-  const char = new THREE.Group();
-  const skin = 0xffe0bd;
-  const matSkin = new THREE.MeshPhongMaterial({ color: skin, shininess: 20 });
-  const matCloth = new THREE.MeshPhongMaterial({ color: new THREE.Color(color || '#888'), shininess: 30 });
-  const matDark = new THREE.MeshPhongMaterial({ color: 0x333344, shininess: 10 });
-  const matMetal = new THREE.MeshPhongMaterial({ color: 0xbbbbbb, shininess: 80 });
-  // 头（圆球）
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), matSkin);
-  head.position.y = 1.75;
-  char.add(head);
-  // 眼睛
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
-  eyeL.position.set(-0.1, 1.78, 0.28);
-  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
-  eyeR.position.set(0.1, 1.78, 0.28);
-  char.add(eyeL, eyeR);
-  // 身体（圆柱）
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 0.7, 12), matCloth);
-  body.position.y = 1.0;
-  char.add(body);
-  // 手臂
-  const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.55, 8), matCloth);
-  armL.position.set(-0.38, 1.05, 0);
-  const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.55, 8), matCloth);
-  armR.position.set(0.38, 1.05, 0);
-  char.add(armL, armR);
-  // 腿
-  const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.55, 8), matDark);
-  legL.position.set(-0.15, 0.35, 0);
-  const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.55, 8), matDark);
-  legR.position.set(0.15, 0.35, 0);
-  char.add(legL, legR);
-  // 武器/装备
-  if (type === 'warrior') {
-    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8, 0, Math.PI*2, 0, Math.PI/2), matMetal);
-    helm.position.y = 1.78;
-    char.add(helm);
-    const sword = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.12), new THREE.MeshPhongMaterial({ color: 0xeeeeee, shininess: 100 }));
-    sword.position.set(0.45, 1.0, 0.1);
-    char.add(sword);
-  } else if (type === 'mage') {
-    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 8), new THREE.MeshPhongMaterial({ color: 0x7b5ea7, shininess: 40 }));
-    hat.position.y = 2.15;
-    char.add(hat);
-    const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6), new THREE.MeshPhongMaterial({ color: 0x6b4a2a }));
-    staff.position.set(0.45, 1.1, 0.08);
-    char.add(staff);
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 12), new THREE.MeshPhongMaterial({ color: 0x9b59b6, emissive: 0x6a3a8a, shininess: 100 }));
-    orb.position.set(0.45, 1.5, 0.08);
-    char.add(orb);
-  } else {
-    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8, 0, Math.PI*2, 0, Math.PI/2), matMetal);
-    helm.position.y = 1.76;
-    char.add(helm);
-    const shield = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.65, 0.5), new THREE.MeshPhongMaterial({ color: 0xf1c40f, shininess: 60 }));
-    shield.position.set(0.45, 1.0, 0.1);
-    char.add(shield);
-  }
-  scene.add(char);
-  const effects = new THREE.Group();
-  scene.add(effects);
-  let action = 'idle', actionT = 0;
-  canvas._doAction = (a) => { action = a; actionT = 0; };
-  function animate() {
-    requestAnimationFrame(animate);
-    const t = performance.now() * 0.002;
-    actionT += 0.05;
-    char.position.y = Math.sin(t * 2) * 0.04;
-    char.rotation.y = Math.sin(t * 0.5) * 0.15;
-    armL.rotation.x = Math.sin(t * 2) * 0.12;
-    armR.rotation.x = -Math.sin(t * 2) * 0.12;
-    legL.rotation.x = -Math.sin(t * 2) * 0.06;
-    legR.rotation.x = Math.sin(t * 2) * 0.06;
-    if (action === 'attack') {
-      const p = Math.min(actionT / 0.5, 1);
-      char.position.x = p * 0.5;
-      char.rotation.z = -p * 0.08;
-      armR.rotation.x = -p * 1.2;
-      if (actionT < 0.4 && Math.floor(actionT * 15) % 2 === 0) {
-        const color = type === 'mage' ? 0x9b59b6 : 0xffd700;
-        const pMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
-        const pMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), pMat);
-        pMesh.position.set(char.position.x + 0.5, 1.2, 0);
-        pMesh.userData.vx = 3;
-        effects.add(pMesh);
-      }
-      if (actionT >= 0.9) { action = 'idle'; char.position.x = 0; char.rotation.z = 0; }
-    } else if (action === 'shield') {
-      if (!effects.children.find(c => c.userData.isShield)) {
-        const shieldMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
-        const shieldMesh = new THREE.Mesh(new THREE.SphereGeometry(0.75, 20, 16), shieldMat);
-        shieldMesh.position.y = 1.2;
-        shieldMesh.userData.isShield = true;
-        effects.add(shieldMesh);
-      }
-      effects.children.forEach(c => { if (c.userData.isShield) c.material.opacity = 0.15 + Math.sin(t * 8) * 0.08; });
-      if (actionT >= 2.5) { action = 'idle'; effects.children = effects.children.filter(c => !c.userData.isShield); }
-    }
-    effects.children.forEach(c => { if (c.userData.vx) { c.position.x += c.userData.vx * 0.03; c.material.opacity -= 0.04; if (c.material.opacity <= 0) effects.remove(c); } });
-    renderer.render(scene, camera);
-  }
-  animate();
-}
+// 华丽2D角色（SVG + 动画）
 function heroSVG(type, color, avatarUrl) {
-  return `<canvas class="hero-3d" data-type="${type}" data-color="${color||'#888'}" style="width:110px;height:140px"></canvas>`;
+  const c = color || '#888';
+  if (type === 'warrior') {
+    return `<svg viewBox="0 0 120 150" class="hero-2d" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffd700"/><stop offset="1" stop-color="#b8860b"/>
+        </linearGradient>
+        <linearGradient id="gSword" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaa"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="60" cy="145" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
+      <g class="hero-body">
+        <circle cx="60" cy="35" r="16" fill="#ffd9b3"/>
+        <path d="M44 30 Q60 15 76 30 L76 25 Q60 12 44 25 Z" fill="#c0c0c0"/>
+        <circle cx="54" cy="35" r="2" fill="#222"/><circle cx="66" cy="35" r="2" fill="#222"/>
+        <path d="M48 50 L72 50 L76 90 L44 90 Z" fill="url(#gBody)"/>
+        <rect x="55" y="50" width="10" height="40" fill="rgba(255,255,255,.2)"/>
+        <path d="M44 55 L38 85 L44 90 L48 60 Z" fill="#c0c0c0"/>
+        <path d="M76 55 L82 85 L76 90 L72 60 Z" fill="#c0c0c0"/>
+        <rect x="48" y="90" width="10" height="35" fill="#333"/>
+        <rect x="62" y="90" width="10" height="35" fill="#333"/>
+        <g class="hero-weapon">
+          <rect x="80" y="55" width="4" height="45" fill="url(#gSword)" rx="2"/>
+          <rect x="76" y="52" width="12" height="4" fill="#8b4513" rx="1"/>
+        </g>
+        <path d="M44 55 Q30 70 28 100 L38 100 Q40 75 48 65 Z" fill="#c0392b"/>
+      </g>
+    </svg>`;
+  }
+  if (type === 'mage') {
+    return `<svg viewBox="0 0 120 150" class="hero-2d" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gRobe" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9b59b6"/><stop offset="1" stop-color="#6c3483"/>
+        </linearGradient>
+        <radialGradient id="gOrb" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#e8d5f5"/><stop offset="1" stop-color="#9b59b6"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="60" cy="145" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
+      <g class="hero-body">
+        <circle cx="60" cy="38" r="14" fill="#ffd9b3"/>
+        <path d="M42 35 L60 10 L78 35 Z" fill="#6c3483"/>
+        <circle cx="55" cy="38" r="2" fill="#222"/><circle cx="65" cy="38" r="2" fill="#222"/>
+        <path d="M46 52 L74 52 L80 110 L40 110 Z" fill="url(#gRobe)"/>
+        <path d="M50 52 L70 52 L66 110 L54 110 Z" fill="rgba(255,255,255,.1)"/>
+        <g class="hero-weapon">
+          <rect x="82" y="45" width="3" height="60" fill="#6b4a2a" rx="1"/>
+          <circle cx="83.5" cy="42" r="8" fill="url(#gOrb)" class="hero-orb"/>
+        </g>
+      </g>
+    </svg>`;
+  }
+  // shield
+  return `<svg viewBox="0 0 120 150" class="hero-2d" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gArmor" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d0d0d0"/><stop offset="1" stop-color="#888"/>
+      </linearGradient>
+      <linearGradient id="gShield" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f1c40f"/><stop offset="1" stop-color="#b7950b"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="60" cy="145" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
+    <g class="hero-body">
+      <circle cx="60" cy="35" r="15" fill="#ffd9b3"/>
+      <path d="M45 32 Q60 18 75 32 L75 27 Q60 15 45 27 Z" fill="#a0a0a0"/>
+      <circle cx="54" cy="35" r="2" fill="#222"/><circle cx="66" cy="35" r="2" fill="#222"/>
+      <rect x="46" y="48" width="28" height="45" rx="4" fill="url(#gArmor)"/>
+      <rect x="56" y="48" width="8" height="45" fill="rgba(255,255,255,.2)"/>
+      <g class="hero-weapon">
+        <path d="M80 55 L95 55 L95 95 L87 105 L80 95 Z" fill="url(#gShield)" stroke="#8b6914" stroke-width="1.5"/>
+      </g>
+      <rect x="48" y="93" width="10" height="32" fill="#444"/>
+      <rect x="62" y="93" width="10" height="32" fill="#444"/>
+    </g>
+  </svg>`;
 }
-function initAll3D() {
-  document.querySelectorAll('canvas.hero-3d').forEach(cv => {
-    if (cv.dataset.init) return;
-    cv.dataset.init = '1';
-    try { init3D(cv, cv.dataset.type, cv.dataset.color); } catch(e){}
-  });
-}
+function initAll3D(){}
 function play3DAction(action) {
-  document.querySelectorAll('canvas.hero-3d').forEach(cv => { if (cv._doAction) cv._doAction(action); });
+  document.querySelectorAll('.hero-2d').forEach(el => {
+    el.classList.remove('hero-attack', 'hero-shield');
+    if (action === 'attack') { el.classList.add('hero-attack'); setTimeout(() => el.classList.remove('hero-attack'), 1000); }
+    if (action === 'shield') { el.classList.add('hero-shield'); setTimeout(() => el.classList.remove('hero-shield'), 2500); }
+  });
 }
 function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
 function hideRules(){ document.getElementById('rulesModal').classList.add('hidden'); }
