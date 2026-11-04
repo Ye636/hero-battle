@@ -502,7 +502,7 @@ function handleMsg(ws, msg) {
         p.streak = 0;
         if (t && t.alive) damageTeam(t, WRONG_PENALTY, `${p.name} 答错，${t.name} -${WRONG_PENALTY}`);
         sendHost(hostState());
-      broadcastTeams();
+        broadcastTeams();
         sendHost({ type: 'answer_stats', stats: buildStats() });
         advanceAfterAction(p, { correct: false, action: { type: 'wrong', penalty: WRONG_PENALTY } });
       } else {
@@ -510,20 +510,22 @@ function handleMsg(ws, msg) {
         p.correct = (p.correct || 0) + 1;
         p.streak = (p.streak || 0) + 1;
         const sk = p.skill;
-        // 答对：攻击手都可以选目标；盾牌手自动加盾
+        // 答对：攻击手选目标，盾牌手自动加盾；选目标无时间限制
         if (sk.key === 'warrior' || sk.key === 'mage') {
           const enemies = state.teams.map((tt, idx) => ({ idx, name: tt.name, color: tt.color, alive: tt.alive }))
             .filter(o => o.alive && o.idx !== p.teamIdx);
           if (enemies.length) {
             p.pendingTarget = true;
+            clearTimeout(p.answerTimer); // 彻底清除答题计时，选目标不限时
             sendTo(p.id, { type: 'pick_target', enemies });
+            sendHost({ type: 'answer_stats', stats: buildStats() });
             return; // 等 attack_target 再结算
           }
         }
         // 自动结算（慢答攻击手/盾牌手）
         const act = applyAction(p, fast, null);
         sendHost(hostState());
-      broadcastTeams();
+        broadcastTeams();
         sendHost({ type: 'answer_stats', stats: buildStats() });
         advanceAfterAction(p, { correct: true, action: act });
       }
