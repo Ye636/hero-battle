@@ -297,6 +297,7 @@
     <div class="player-list" id="hostPlayerList"></div>
     <div style="text-align:center;margin-top:12px">
       <button class="btn green large" id="startGameBtn" onclick="startGame()" disabled>⚔️ 开始战斗！</button>
+      <button class="btn" id="stopGameBtn" style="background:linear-gradient(135deg,#e74c3c,#c0392b);margin-left:8px;display:none" onclick="if(confirm('确定终止比赛并重新开始？'))replay()">⏹️ 终止比赛</button>
     </div>
   </div>
 
@@ -613,6 +614,7 @@ function handleMsg(msg) {
           `<div class="team-prev" style="border-color:${t.color}"><b style="color:${t.color}">${t.name}</b><div class="cnt">${t.members.length} 人</div></div>`).join('');
         document.getElementById('startGameBtn').disabled = msg.phase !== 'lobby';
         document.getElementById('startGameBtn').textContent = msg.phase === 'lobby' ? '⚔️ 开始战斗！' : '游戏中';
+        document.getElementById('stopGameBtn').style.display = msg.phase === 'playing' ? 'inline-block' : 'none';
       }
       if (!isHost && myPlayerId) {
         const my = msg.players.find(p => p.id === myPlayerId);
