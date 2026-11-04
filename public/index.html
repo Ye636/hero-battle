@@ -205,6 +205,7 @@
   .vs-badge{text-align:center;font-size:16px;color:#ffd700;margin:4px 0}
   @media(max-width:500px){.options{grid-template-columns:1fr}.wrap{max-width:100%}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -385,12 +386,105 @@ const ROLE_INFO = {
   shield: { key:'shield', emoji:'🛡️', name:'盾牌手', color:'#f1c40f' }
 };
 let mySkill = ROLE_INFO[myRole];
-// 元气骑士原版角色图
+// 3D 立体角色（Three.js 方块人）
+let _3dScene = null, _3dRenderer = null, _3dCamera = null, _3dChar = null, _3dAnim = null;
+function init3D(canvas, type, color) {
+  const w = canvas.clientWidth || 120, h = canvas.clientHeight || 140;
+  _3dRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  _3dRenderer.setSize(w, h, false);
+  _3dScene = new THREE.Scene();
+  _3dCamera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
+  _3dCamera.position.set(0, 1.5, 5);
+  _3dCamera.lookAt(0, 1, 0);
+  // 灯光
+  const amb = new THREE.AmbientLight(0xffffff, 0.7);
+  _3dScene.add(amb);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(2, 4, 3);
+  _3dScene.add(dir);
+  // 角色
+  _3dChar = new THREE.Group();
+  const skin = 0xffd9b3, cloth = new THREE.Color(color || '#888');
+  const matSkin = new THREE.MeshLambertMaterial({ color: skin });
+  const matCloth = new THREE.MeshLambertMaterial({ color: cloth });
+  const matDark = new THREE.MeshLambertMaterial({ color: 0x333333 });
+  // 头
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), matSkin);
+  head.position.y = 1.8;
+  _3dChar.add(head);
+  // 头盔/帽子
+  if (type === 'warrior') {
+    const helm = new THREE.Mesh(new THREE.BoxGeometry(0.65,0.3,0.65), new THREE.MeshLambertMaterial({color:0xaaaaaa}));
+    helm.position.y = 2.05; _3dChar.add(helm);
+  } else if (type === 'mage') {
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5,0.6,4), new THREE.MeshLambertMaterial({color:0x6a4a8a}));
+    hat.position.y = 2.2; hat.rotation.y = Math.PI/4; _3dChar.add(hat);
+  } else {
+    const helm = new THREE.Mesh(new THREE.BoxGeometry(0.65,0.25,0.65), new THREE.MeshLambertMaterial({color:0x888888}));
+    helm.position.y = 2.0; _3dChar.add(helm);
+  }
+  // 身体
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.8,0.4), matCloth);
+  body.position.y = 1.0;
+  _3dChar.add(body);
+  // 手臂
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.7,0.2), matCloth);
+  armL.position.set(-0.5, 1.1, 0);
+  const armR = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.7,0.2), matCloth);
+  armR.position.set(0.5, 1.1, 0);
+  _3dChar.add(armL, armR);
+  // 腿
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.7,0.25), matDark);
+  legL.position.set(-0.2, 0.35, 0);
+  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.7,0.25), matDark);
+  legR.position.set(0.2, 0.35, 0);
+  _3dChar.add(legL, legR);
+  // 武器/盾牌
+  if (type === 'warrior') {
+    const sword = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.8,0.08), new THREE.MeshLambertMaterial({color:0xcccccc}));
+    sword.position.set(0.5, 1.0, 0.2);
+    _3dChar.add(sword);
+  } else if (type === 'shield') {
+    const shield = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.7), new THREE.MeshLambertMaterial({color:0xf1c40f}));
+    shield.position.set(0.5, 1.0, 0.2);
+    _3dChar.add(shield);
+  } else {
+    const staff = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.9,0.06), new THREE.MeshLambertMaterial({color:0x8a5a2a}));
+    staff.position.set(0.5, 1.1, 0.1);
+    _3dChar.add(staff);
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8), new THREE.MeshLambertMaterial({color:0x9b59b6}));
+    orb.position.set(0.5, 1.6, 0.1);
+    _3dChar.add(orb);
+  }
+  _3dScene.add(_3dChar);
+  // 动画循环
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.05;
+    if (_3dChar) {
+      _3dChar.position.y = Math.sin(t*2) * 0.05; // 待机浮动
+      _3dChar.rotation.y = Math.sin(t*0.5) * 0.3; // 缓慢转身
+      armL.rotation.x = Math.sin(t*2) * 0.2;
+      armR.rotation.x = -Math.sin(t*2) * 0.2;
+      legL.rotation.x = -Math.sin(t*2) * 0.1;
+      legR.rotation.x = Math.sin(t*2) * 0.1;
+    }
+    _3dRenderer.render(_3dScene, _3dCamera);
+  }
+  animate();
+}
 function heroSVG(type, color, avatarUrl) {
-  const img = type === 'warrior' ? 'heroes/warrior_c.png'
-    : type === 'mage' ? 'heroes/mage_c.png'
-    : 'heroes/shield_c.png';
-  return `<img src="${img}" style="width:110px;height:130px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))">`;
+  // 返回一个 canvas 容器，3D 渲染在上面
+  return `<canvas class="hero-3d" data-type="${type}" data-color="${color||'#888'}" style="width:110px;height:140px"></canvas>`;
+}
+// 页面渲染后初始化所有 3D canvas
+function initAll3D() {
+  document.querySelectorAll('canvas.hero-3d').forEach(cv => {
+    if (cv.dataset.init) return;
+    cv.dataset.init = '1';
+    try { init3D(cv, cv.dataset.type, cv.dataset.color); } catch(e){}
+  });
 }
 function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
 function hideRules(){ document.getElementById('rulesModal').classList.add('hidden'); }
@@ -552,6 +646,7 @@ function showQuestion(msg) {
       <span class="hero-svg">${heroSVG(heroType, heroColor, myPhoto)}</span>
     </div>` +
     (msg.img ? `<div style="font-size:40px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
+  initAll3D();
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
   msg.options.forEach((opt, i) => {
