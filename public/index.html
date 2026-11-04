@@ -682,6 +682,11 @@ function handleMsg(msg) {
 
     case 'game_reset':
       stopCountdown();
+      cachedTeams = [];
+      const ba = document.getElementById('battleArena');
+      if (ba) ba.innerHTML = '';
+      const ts = document.getElementById('teamStrip');
+      if (ts) ts.innerHTML = '';
       if (isHost) show('hostPanel');
       else show('lobbyPanel');
       break;
