@@ -131,6 +131,20 @@
   .fx-pulse{animation:pulse 1.2s ease-in-out infinite}
   .float-txt{position:fixed;left:50%;top:40%;transform:translateX(-50%);font-size:42px;font-weight:900;pointer-events:none;z-index:999;animation:floatUp 1.2s ease-out forwards}
   .fireball{position:fixed;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#ffd700,#ff4500);box-shadow:0 0 20px #ff4500;z-index:999;pointer-events:none;animation:fireball .7s ease-out forwards}
+  /* 角色动画形象 */
+  .hero-sprite{display:inline-block;font-size:56px;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));position:relative}
+  @keyframes idleBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+  @keyframes attackLunge{0%,100%{transform:translateX(0)}40%{transform:translateX(20px) scale(1.15)}60%{transform:translateX(18px) scale(1.1)}}
+  @keyframes castGlow{0%,100%{filter:drop-shadow(0 0 4px #9b59b6)}50%{filter:drop-shadow(0 0 18px #9b59b6) brightness(1.4)}}
+  @keyframes shieldRaise{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px) scale(1.08)}}
+  .hero-warrior{animation:idleBob 2s ease-in-out infinite}
+  .hero-warrior.attack{animation:attackLunge .6s ease-out}
+  .hero-mage{animation:idleBob 2.4s ease-in-out infinite, castGlow 1.8s ease-in-out infinite}
+  .hero-shield{animation:shieldRaise 1.6s ease-in-out infinite}
+  /* 全屏护盾爆发特效 */
+  @keyframes shieldBurst{0%{box-shadow:0 0 0 0 rgba(241,196,15,.9);opacity:1}100%{box-shadow:0 0 0 120px rgba(241,196,15,0);opacity:0}}
+  .shield-burst{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:100px;height:100px;border-radius:50%;border:6px solid #f1c40f;z-index:999;pointer-events:none;animation:shieldBurst 1s ease-out forwards}
+  .shield-text{position:fixed;left:50%;top:35%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#f1c40f;text-shadow:0 0 20px #f1c40f,0 2px 4px #000;z-index:999;pointer-events:none;animation:floatUp 1.5s ease-out forwards}
   /* ---- 主持人战斗大屏 ---- */
   #hostBattlePanel{max-width:900px;margin:0 auto}
   .host-arena{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0;position:relative}
@@ -358,6 +372,12 @@ document.getElementById('studentName').addEventListener('input', function(){
   document.getElementById('joinBtn').disabled = !(this.value.trim() && (myPhoto || true));
 });
 let myRole = 'warrior';
+const ROLE_INFO = {
+  warrior: { key:'warrior', emoji:'⚔️', name:'战士', color:'#e74c3c' },
+  mage: { key:'mage', emoji:'🔥', name:'法师', color:'#9b59b6' },
+  shield: { key:'shield', emoji:'🛡️', name:'盾牌手', color:'#f1c40f' }
+};
+let mySkill = ROLE_INFO[myRole];
 function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
 function hideRules(){ document.getElementById('rulesModal').classList.add('hidden'); }
 document.querySelectorAll('.role-card').forEach(card => {
@@ -366,6 +386,7 @@ document.querySelectorAll('.role-card').forEach(card => {
     document.querySelectorAll('.role-card').forEach(c => c.classList.remove('sel'));
     card.classList.add('sel');
     myRole = card.dataset.key;
+    mySkill = ROLE_INFO[myRole];
   });
 });
 function joinRoom() {
@@ -508,8 +529,13 @@ function handleMsg(msg) {
 function showQuestion(msg) {
   show('answerPanel');
   stopCountdown();
-  document.getElementById('qNum').textContent = `第 ${msg.qNum} 题`;
-  document.getElementById('qText').innerHTML = (msg.img ? `<div style="font-size:48px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
+  document.getElementById('qNum').textContent = `第 ${msg.qNum} 题 / ${msg.total || 24}`;
+  // 角色动画形象
+  const heroCls = mySkill ? (mySkill.key==='warrior'?'hero-warrior':mySkill.key==='mage'?'hero-mage':'hero-shield') : '';
+  const heroEmoji = mySkill ? mySkill.emoji : '❓';
+  document.getElementById('qText').innerHTML =
+    `<div style="font-size:60px;margin:6px 0" class="hero-sprite ${heroCls}">${heroEmoji}</div>` +
+    (msg.img ? `<div style="font-size:40px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
   msg.options.forEach((opt, i) => {
@@ -579,9 +605,21 @@ function revealAction(msg) {
     document.body.appendChild(fb);
     setTimeout(() => fb.remove(), 700);
   }
-  // 护盾特效
+  // 护盾特效：全屏金色护盾爆发 + 大字提示
   if (msg.action && msg.action.type === 'shield') {
     rb.classList.add('fx-shield');
+    const burst = document.createElement('div');
+    burst.className = 'shield-burst';
+    document.body.appendChild(burst);
+    const st = document.createElement('div');
+    st.className = 'shield-text';
+    st.textContent = '🛡️ 护盾展开！';
+    document.body.appendChild(st);
+    // 金色全屏闪光
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:fixed;inset:0;background:radial-gradient(circle,rgba(241,196,15,.4),transparent 70%);z-index:998;pointer-events:none;animation:flashGreen 1s';
+    document.body.appendChild(flash);
+    setTimeout(() => { burst.remove(); st.remove(); flash.remove(); }, 1500);
   }
   let txt = msg.correct ? `✅ 答对了！` : `❌ 答错了！正确答案：<b>${msg.answer}</b>`;
   const a = msg.action;
