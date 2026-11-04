@@ -87,7 +87,10 @@
   .battle-arena{display:flex;gap:12px;justify-content:center;align-items:flex-end;margin:10px 0;min-height:140px;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.1));border-radius:12px;padding:10px;overflow:hidden}
   .arena-team{display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .5s}
   .arena-team .arena-name{font-size:12px;font-weight:bold}
-  .arena-team .arena-hero{width:70px;height:85px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  .arena-team .arena-hero{width:60px;height:75px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  .arena-members{display:flex;gap:6px;justify-content:center}
+  .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .arena-mname{font-size:10px;font-weight:bold;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   @keyframes arenaIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   .arena-team.attacking{animation:arenaAttack 1s ease-out}
   @keyframes arenaAttack{0%{transform:translateX(0)}50%{transform:translateX(60px) scale(1.2)}100%{transform:translateX(0)}}
@@ -577,9 +580,15 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   const myIdx = myTeam ? myTeam.idx : -1;
   box.innerHTML = teams.map((t, i) => {
     const cls = 'arena-team' + (i === attackIdx ? ' attacking' : '') + (i === hitIdx ? ' hit' : '') + (i === defendIdx ? ' defending' : '');
-    const hero = heroSVG(mySkill ? mySkill.key : 'warrior', t.color);
+    const members = (t.members || []).slice(0, 3).map(m => {
+      const hero = heroSVG(m.skill || 'warrior', t.color);
+      return `<div class="arena-member">
+        <div class="arena-hero">${hero}</div>
+        <div class="arena-mname" style="color:${t.color}">${esc(m.name)}</div>
+      </div>`;
+    }).join('');
     return `<div class="${cls}" data-team="${i}">
-      <div class="arena-hero">${hero}</div>
+      <div class="arena-members">${members}</div>
       <div class="arena-name" style="color:${t.color}">${t.name}</div>
     </div>`;
   }).join('');

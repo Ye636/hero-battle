@@ -260,7 +260,8 @@ function advanceAfterAction(p, result) {
 
 function teamsSnapshot() {
   return state.teams.map((t, i) => ({
-    idx: i, name: t.name, color: t.color, hp: t.hp, maxHp: t.maxHp || t.hp, alive: t.alive
+    idx: i, name: t.name, color: t.color, hp: t.hp, maxHp: t.maxHp || t.hp, alive: t.alive,
+    members: t.members.map(m => ({ name: m.name, skill: m.skill ? m.skill.key : 'warrior', photo: m.photo || '' }))
   }));
 }
 
