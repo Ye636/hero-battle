@@ -141,6 +141,12 @@
   .hero-warrior.attack{animation:attackLunge .6s ease-out}
   .hero-mage{animation:idleBob 2.4s ease-in-out infinite, castGlow 1.8s ease-in-out infinite}
   .hero-shield{animation:shieldRaise 1.6s ease-in-out infinite}
+  .hero-svg{width:90px;height:110px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
+  .hero-svg svg{width:100%;height:100%}
+  @keyframes walkCycle{0%,100%{transform:translateY(0) rotate(-1deg)}25%{transform:translateY(-3px) rotate(1deg)}50%{transform:translateY(0)}75%{transform:translateY(-3px) rotate(-1deg)}}
+  @keyframes staffSpin{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+  .hero-svg .weapon{transform-origin:center;animation:staffSpin 2s ease-in-out infinite}
+  .hero-svg .legs{animation:walkCycle 1s ease-in-out infinite}
   /* 全屏护盾爆发特效 */
   @keyframes shieldBurst{0%{box-shadow:0 0 0 0 rgba(241,196,15,.9);opacity:1}100%{box-shadow:0 0 0 120px rgba(241,196,15,0);opacity:0}}
   .shield-burst{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:100px;height:100px;border-radius:50%;border:6px solid #f1c40f;z-index:999;pointer-events:none;animation:shieldBurst 1s ease-out forwards}
@@ -378,6 +384,59 @@ const ROLE_INFO = {
   shield: { key:'shield', emoji:'🛡️', name:'盾牌手', color:'#f1c40f' }
 };
 let mySkill = ROLE_INFO[myRole];
+// SVG 虚拟人物角色
+function heroSVG(type, color) {
+  const c = color || '#aaa';
+  if (type === 'warrior') {
+    return `<svg viewBox="0 0 100 120">
+      <g class="legs">
+        <rect x="38" y="85" width="10" height="25" fill="#444"/>
+        <rect x="52" y="85" width="10" height="25" fill="#333"/>
+      </g>
+      <rect x="32" y="55" width="36" height="35" rx="6" fill="${c}"/>
+      <rect x="32" y="55" width="36" height="10" rx="4" fill="${c}" opacity=".7"/>
+      <circle cx="50" cy="38" r="16" fill="#f0c8a0"/>
+      <path d="M34 32 Q50 18 66 32 L66 26 L34 26 Z" fill="#666"/>
+      <rect x="34" y="24" width="32" height="6" rx="2" fill="#888"/>
+      <g class="weapon">
+        <rect x="78" y="40" width="4" height="40" fill="#aaa" transform="rotate(15 80 60)"/>
+        <circle cx="82" cy="40" r="6" fill="#ddd" transform="rotate(15 82 40)"/>
+      </g>
+      <rect x="20" y="55" width="10" height="20" rx="3" fill="${c}" opacity=".8"/>
+    </svg>`;
+  }
+  if (type === 'mage') {
+    return `<svg viewBox="0 0 100 120">
+      <g class="legs">
+        <path d="M35 85 L45 110 L55 110 L65 85 Z" fill="#553"/>
+      </g>
+      <path d="M28 55 L72 55 L78 110 L22 110 Z" fill="${c}"/>
+      <path d="M30 55 L70 55 L75 75 L25 75 Z" fill="${c}" opacity=".8"/>
+      <circle cx="50" cy="38" r="14" fill="#f0c8a0"/>
+      <path d="M32 36 L50 12 L68 36 L68 30 L50 18 L32 30 Z" fill="#7a5"/>
+      <g class="weapon">
+        <rect x="80" y="35" width="3" height="50" fill="#852"/>
+        <circle cx="82" cy="32" r="8" fill="#9b59b6" opacity=".9">
+          <animate attributeName="r" values="7;9;7" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </svg>`;
+  }
+  // shield
+  return `<svg viewBox="0 0 100 120">
+      <g class="legs">
+        <rect x="36" y="85" width="11" height="25" fill="#555"/>
+        <rect x="53" y="85" width="11" height="25" fill="#444"/>
+      </g>
+      <rect x="30" y="52" width="40" height="38" rx="6" fill="${c}"/>
+      <rect x="30" y="52" width="40" height="12" rx="4" fill="${c}" opacity=".7"/>
+      <circle cx="50" cy="36" r="15" fill="#f0c8a0"/>
+      <path d="M33 30 Q50 16 67 30 L67 24 L33 24 Z" fill="#999"/>
+      <rect x="30" y="22" width="40" height="7" rx="2" fill="#bbb"/>
+      <path d="M75 55 Q92 65 92 85 Q92 105 75 112 Q58 105 58 85 Q58 65 75 55 Z" fill="#f1c40f" stroke="#b8860b" stroke-width="2"/>
+      <path d="M75 62 Q86 70 86 85 Q86 100 75 105" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/>
+    </svg>`;
+}
 function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
 function hideRules(){ document.getElementById('rulesModal').classList.add('hidden'); }
 document.querySelectorAll('.role-card').forEach(card => {
@@ -530,11 +589,13 @@ function showQuestion(msg) {
   show('answerPanel');
   stopCountdown();
   document.getElementById('qNum').textContent = `第 ${msg.qNum} 题 / ${msg.total || 24}`;
-  // 角色动画形象
-  const heroCls = mySkill ? (mySkill.key==='warrior'?'hero-warrior':mySkill.key==='mage'?'hero-mage':'hero-shield') : '';
-  const heroEmoji = mySkill ? mySkill.emoji : '❓';
+  // 虚拟人物角色（按队伍颜色）
+  const heroColor = myTeam ? myTeam.color : '#aaa';
+  const heroType = mySkill ? mySkill.key : 'warrior';
   document.getElementById('qText').innerHTML =
-    `<div style="font-size:60px;margin:6px 0" class="hero-sprite ${heroCls}">${heroEmoji}</div>` +
+    `<div class="hero-sprite ${heroType==='warrior'?'hero-warrior':heroType==='mage'?'hero-mage':'hero-shield'}">
+      <span class="hero-svg">${heroSVG(heroType, heroColor)}</span>
+    </div>` +
     (msg.img ? `<div style="font-size:40px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
