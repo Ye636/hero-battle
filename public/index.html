@@ -385,72 +385,12 @@ const ROLE_INFO = {
   shield: { key:'shield', emoji:'🛡️', name:'盾牌手', color:'#f1c40f' }
 };
 let mySkill = ROLE_INFO[myRole];
-// SVG 虚拟人物角色（动漫画风，头像嵌入）
+// 元气骑士原版角色图
 function heroSVG(type, color, avatarUrl) {
-  const c = color || '#aaa';
-  const skin = '#ffd9b3';
-  const faceCls = avatarUrl
-    ? `<clipPath id="fc${Math.random().toString(36).slice(2,8)}"><rect x="38" y="28" width="24" height="22"/></clipPath><image href="${avatarUrl}" x="38" y="28" width="24" height="22" clip-path="url(#fc${Math.random().toString(36).slice(2,8)})"/>`
-    : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/><rect x="44" y="43" width="8" height="2" fill="#e74c3c"/>`;
-  if (type === 'warrior') {
-    return `<svg viewBox="0 0 100 120" shape-rendering="crispEdges">
-      <g class="legs">
-        <rect x="40" y="92" width="8" height="20" fill="#333"/>
-        <rect x="52" y="92" width="8" height="20" fill="#222"/>
-        <rect x="38" y="110" width="12" height="6" fill="#111"/>
-        <rect x="50" y="110" width="12" height="6" fill="#111"/>
-      </g>
-      <rect x="34" y="62" width="32" height="32" fill="${c}"/>
-      <rect x="34" y="62" width="32" height="6" fill="${c}" opacity=".7"/>
-      <rect x="44" y="72" width="12" height="8" fill="#ffd700"/>
-      <rect x="38" y="26" width="24" height="24" fill="${skin}"/>
-      ${avatarUrl ? faceCls : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/>`}
-      <rect x="36" y="20" width="28" height="8" fill="#aaa"/>
-      <rect x="34" y="16" width="32" height="6" fill="#ccc"/>
-      <g class="weapon">
-        <rect x="78" y="44" width="4" height="36" fill="#ddd"/>
-        <rect x="74" y="42" width="12" height="4" fill="#ffd700"/>
-      </g>
-      <rect x="28" y="66" width="6" height="16" fill="${c}" opacity=".8"/>
-    </svg>`;
-  }
-  if (type === 'mage') {
-    return `<svg viewBox="0 0 100 120" shape-rendering="crispEdges">
-      <g class="legs">
-        <rect x="40" y="92" width="8" height="20" fill="#4a3a6a"/>
-        <rect x="52" y="92" width="8" height="20" fill="#3a2a5a"/>
-      </g>
-      <polygon points="32,62 68,62 72,110 28,110" fill="${c}"/>
-      <polygon points="32,62 68,62 70,72 30,72" fill="${c}" opacity=".7"/>
-      <rect x="38" y="28" width="24" height="22" fill="${skin}"/>
-      ${avatarUrl ? faceCls : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/>`}
-      <polygon points="34,30 50,10 66,30" fill="#6a4a8a"/>
-      <rect x="30" y="28" width="40" height="5" fill="#5a3a7a"/>
-      <g class="weapon">
-        <rect x="80" y="40" width="4" height="50" fill="#8a5a2a"/>
-        <rect x="76" y="32" width="12" height="12" fill="#9b59b6">
-          <animate attributeName="opacity" values="1;.6;1" dur="1.5s" repeatCount="indefinite"/>
-        </rect>
-        <rect x="79" y="35" width="6" height="6" fill="#fff"/>
-      </g>
-    </svg>`;
-  }
-  // shield
-  return `<svg viewBox="0 0 100 120" shape-rendering="crispEdges">
-      <g class="legs">
-        <rect x="40" y="92" width="8" height="20" fill="#333"/>
-        <rect x="52" y="92" width="8" height="20" fill="#222"/>
-      </g>
-      <rect x="34" y="60" width="32" height="34" fill="${c}"/>
-      <rect x="34" y="60" width="32" height="8" fill="${c}" opacity=".7"/>
-      <rect x="40" y="70" width="6" height="4" fill="#fff" opacity=".4"/>
-      <rect x="38" y="28" width="24" height="22" fill="${skin}"/>
-      ${avatarUrl ? faceCls : `<rect x="38" y="28" width="24" height="22" fill="${skin}"/><rect x="43" y="36" width="3" height="4" fill="#222"/><rect x="52" y="36" width="3" height="4" fill="#222"/>`}
-      <rect x="34" y="20" width="32" height="8" fill="#888"/>
-      <rect x="32" y="16" width="36" height="6" fill="#aaa"/>
-      <path d="M74 58 L92 62 L92 96 L83 108 L74 96 Z" fill="#f1c40f" stroke="#b8860b" stroke-width="2"/>
-      <rect x="78" y="66" width="4" height="20" fill="#fff" opacity=".4"/>
-    </svg>`;
+  const img = type === 'warrior' ? 'heroes/warrior_c.png'
+    : type === 'mage' ? 'heroes/mage_c.png'
+    : 'heroes/shield_c.png';
+  return `<img src="${img}" style="width:110px;height:130px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))">`;
 }
 function showRules(){ document.getElementById('rulesModal').classList.remove('hidden'); }
 function hideRules(){ document.getElementById('rulesModal').classList.add('hidden'); }
