@@ -84,16 +84,18 @@
   .team-tag{font-weight:bold;font-size:18px}
   /* ---- 队伍血条条（学生作答顶部） ---- */
   .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
-  .battle-arena{display:flex;gap:6px;justify-content:flex-start;align-items:flex-end;margin:8px 0 0;min-height:40px;background:rgba(0,0,0,.15);border-radius:8px;padding:4px 8px;overflow-x:auto;overflow-y:hidden}
-  .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .3s}
-  .arena-member .arena-hero{width:35px;height:45px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
-  .arena-member.me{outline:2px solid #ffd700;border-radius:8px;padding:2px}
+  .battle-arena{display:flex !important;gap:8px;justify-content:flex-start;align-items:flex-end;margin:10px 0 0;min-height:60px;min-width:200px;background:rgba(0,0,0,.25);border-radius:10px;padding:6px 10px;overflow-x:auto;overflow-y:hidden;border:1px solid rgba(255,255,255,.1)}
+  .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .3s;flex-shrink:0;cursor:default}
+  .arena-member .arena-hero{width:45px;height:55px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  .arena-member.me{outline:2px solid #ffd700;border-radius:10px;padding:2px}
   .arena-member.hit{animation:arenaHit .6s}
   .arena-member.defend{animation:arenaDefend 2.5s}
-  .arena-mname{font-size:10px;font-weight:bold;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .arena-member.pickable{cursor:pointer;animation:arenaPulse 0.8s infinite}
+  .arena-mname{font-size:11px;font-weight:bold;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
   @keyframes arenaIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes arenaHit{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px) scale(1.1)}75%{transform:translateX(8px) scale(1.1)}}
   @keyframes arenaDefend{0%{transform:scale(1)}30%{transform:scale(1.15)}100%{transform:scale(1)}}
+  @keyframes arenaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15);filter:drop-shadow(0 0 12px #ffd700)}}
   .mini-team{flex:1;min-width:120px;background:rgba(0,0,0,.25);border:2px solid;border-radius:12px;padding:6px 8px;text-align:center;position:relative;transition:.3s}
   .mini-team.dying{opacity:.5;filter:grayscale(.7)}
   .mini-team .mt-name{font-size:13px;font-weight:bold}
@@ -593,7 +595,8 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   });
   box.innerHTML = allHeroes.map(h => {
     const cls = 'arena-member' + (h.isMe ? ' me' : '') + (h.teamIdx === hitIdx ? ' hit' : '') + (h.teamIdx === defendIdx ? ' defend' : '');
-    return `<div class="${cls}">
+    const dataTeam = h.teamIdx !== undefined ? `data-team="${h.teamIdx}"` : '';
+    return `<div class="${cls}" ${dataTeam}>
       <div class="arena-hero">${h.hero}</div>
       <div class="arena-mname" style="color:${h.color}">${esc(h.name)}</div>
     </div>`;
@@ -724,20 +727,19 @@ function showPickTarget(msg) {
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal show';
   rb.style.borderLeft = '4px solid #ff6b6b';
-  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！点击上方其他队伍的角色进行攻击：</div>`;
+  rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！点击下方其他队伍的角色进行攻击：</div>`;
   // 让战场里的敌人角色可点击
   const arena = document.getElementById('battleArena');
   if (arena) {
     (msg.enemies || []).forEach(e => {
       const el = arena.querySelector(`[data-team="${e.idx}"]`);
       if (el) {
-        el.style.cursor = 'pointer';
-        el.style.animation = 'pulse 0.8s infinite';
+        el.classList.add('pickable');
         el.title = '点击攻击 ' + e.name;
         el.onclick = () => {
           send({ type: 'attack_target', targetIdx: e.idx });
           rb.innerHTML = '<div style="color:#2ecc71">已选择攻击 ' + esc(e.name) + '，等待其他玩家...</div>';
-          arena.querySelectorAll('.arena-member').forEach(x => { x.style.cursor = ''; x.style.animation = ''; x.onclick = null; });
+          arena.querySelectorAll('.arena-member').forEach(x => { x.classList.remove('pickable'); x.onclick = null; });
         };
       }
     });
