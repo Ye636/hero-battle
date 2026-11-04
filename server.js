@@ -112,7 +112,10 @@ function broadcastTeams() {
   const teams = state.teams.map((t, i) => ({
     idx: i, name: t.name, color: t.color, hp: Math.max(0, t.hp), maxHp: t.maxHp, alive: t.alive,
     shield: state.shields[i] ? state.shields[i].reduction : 0,
-    members: t.members.length
+    members: t.members.map(id => {
+      const p = playerFromId(id);
+      return p ? { id: p.id, name: p.name, photo: p.photo, skill: p.skill } : null;
+    }).filter(Boolean)
   }));
   broadcast({ type: 'teams_update', teams });
 }
@@ -458,6 +461,7 @@ function handleMsg(ws, msg) {
       state.log.push({ text: '⚔️ 战斗开始！每人独立答题，答得快且对可自选目标攻击！', type: 'skill' });
       broadcast({ type: 'game_started' });
       broadcast(lobbyUpdate());
+      broadcastTeams();
       // 给每个玩家发第一题（即使只有1队也能跑，攻击无目标时自动跳过）
       state.players.forEach(p => sendQuestion(p));
       break;
