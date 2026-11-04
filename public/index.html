@@ -84,9 +84,9 @@
   .team-tag{font-weight:bold;font-size:18px}
   /* ---- 队伍血条条（学生作答顶部） ---- */
   .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
-  .battle-arena{display:flex;gap:10px;justify-content:center;align-items:flex-end;margin:10px 0;min-height:120px;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.1));border-radius:12px;padding:10px;overflow-x:auto;flex-wrap:wrap}
+  .battle-arena{display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:8px 0;min-height:80px;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.1));border-radius:12px;padding:8px;overflow-x:auto;flex-wrap:wrap}
   .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .3s}
-  .arena-member .arena-hero{width:60px;height:75px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  .arena-member .arena-hero{width:45px;height:55px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
   .arena-member.me{outline:2px solid #ffd700;border-radius:8px;padding:2px}
   .arena-member.hit{animation:arenaHit .6s}
   .arena-member.defend{animation:arenaDefend 2.5s}
@@ -143,7 +143,7 @@
   .fireball{position:fixed;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#ffd700,#ff4500);box-shadow:0 0 20px #ff4500;z-index:999;pointer-events:none;animation:fireball .7s ease-out forwards}
   /* 角色动画形象 */
   .hero-sprite{display:inline-block;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));position:relative}
-  .hero-2d{width:110px;height:135px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.6));animation:heroIdle 2s ease-in-out infinite;position:relative;transform-origin:center bottom}
+  .hero-2d{width:70px;height:88px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.6));animation:heroIdle 2s ease-in-out infinite;position:relative;transform-origin:center bottom}
   @keyframes heroIdle{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
   .hero-2d.hero-attack{animation:heroAttack 1s ease-out !important}
   @keyframes heroAttack{0%{transform:translateX(0) rotate(0) scale(1)}15%{transform:translateX(-15px) rotate(-8deg) scale(1.1)}45%{transform:translateX(50px) rotate(15deg) scale(1.3)}60%{transform:translateX(40px) rotate(10deg) scale(1.2)}100%{transform:translateX(0) rotate(0) scale(1)}}
