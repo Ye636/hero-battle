@@ -111,7 +111,8 @@ function sendHost(obj) {
 function newTeam() {
   const i = state.teams.length;
   const base = TEAM_POOL[i % TEAM_POOL.length];
-  const t = { name: base.name, color: base.color, skill: base.skill, hp: 0, maxHp: 0, members: [], alive: true };
+  const suffix = i >= TEAM_POOL.length ? (Math.floor(i / TEAM_POOL.length) + 1) : '';
+  const t = { name: base.name + suffix, color: base.color, skill: base.skill, hp: 0, maxHp: 0, members: [], alive: true };
   state.teams.push(t);
   return t;
 }
