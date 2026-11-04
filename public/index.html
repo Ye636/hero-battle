@@ -692,16 +692,7 @@ function showQuestion(msg) {
   show('answerPanel');
   stopCountdown();
   document.getElementById('qNum').textContent = `第 ${msg.qNum} 题 / ${msg.total || 24}`;
-  // 虚拟人物角色（按队伍颜色）
-  const heroColor = myTeam ? myTeam.color : '#aaa';
-  const heroType = mySkill ? mySkill.key : 'warrior';
-  document.getElementById('qText').innerHTML =
-    `<div class="hero-sprite ${heroType==='warrior'?'hero-warrior':heroType==='mage'?'hero-mage':'hero-shield'}">
-      <span class="hero-svg">${heroSVG(heroType, heroColor, myPhoto)}</span>
-    </div>` +
-    (msg.img ? `<div style="font-size:40px;margin-bottom:6px">${msg.img}</div>` : '') + esc(msg.question);
-  initAll3D();
-  renderBattleArena(cachedTeams);
+  document.getElementById('qText').innerHTML = esc(msg.question);
   const box = document.getElementById('optsBox');
   box.innerHTML = '';
   msg.options.forEach((opt, i) => {
@@ -714,7 +705,7 @@ function showQuestion(msg) {
   });
   document.getElementById('revealBox').className = 'reveal';
   document.getElementById('revealBox').innerHTML = '';
-  renderTeamStrip([]);
+  try { renderBattleArena(cachedTeams); } catch(e){}
   startCountdown(msg.roundTime, 'cdBar', 'cdNum');
 }
 function lockIn(idx, box) {
