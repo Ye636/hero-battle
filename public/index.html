@@ -84,6 +84,17 @@
   .team-tag{font-weight:bold;font-size:18px}
   /* ---- 队伍血条条（学生作答顶部） ---- */
   .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
+  .battle-arena{display:flex;gap:12px;justify-content:center;align-items:flex-end;margin:10px 0;min-height:140px;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.1));border-radius:12px;padding:10px;overflow:hidden}
+  .arena-team{display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .5s}
+  .arena-team .arena-name{font-size:12px;font-weight:bold}
+  .arena-team .arena-hero{width:70px;height:85px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  @keyframes arenaIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .arena-team.attacking{animation:arenaAttack 1s ease-out}
+  @keyframes arenaAttack{0%{transform:translateX(0)}50%{transform:translateX(60px) scale(1.2)}100%{transform:translateX(0)}}
+  .arena-team.hit{animation:arenaHit .6s}
+  @keyframes arenaHit{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px) scale(1.1)}75%{transform:translateX(10px) scale(1.1)}}
+  .arena-team.defending{animation:arenaDefend 2.5s}
+  @keyframes arenaDefend{0%{transform:scale(1)}30%{transform:scale(1.15)}100%{transform:scale(1)}}
   .mini-team{flex:1;min-width:120px;background:rgba(0,0,0,.25);border:2px solid;border-radius:12px;padding:6px 8px;text-align:center;position:relative;transition:.3s}
   .mini-team.dying{opacity:.5;filter:grayscale(.7)}
   .mini-team .mt-name{font-size:13px;font-weight:bold}
@@ -307,6 +318,7 @@
   <div class="hidden" id="answerPanel">
     <div class="panel">
       <div class="team-strip" id="teamStrip"></div>
+      <div class="battle-arena" id="battleArena"></div>
       <div class="question-box">
         <div class="question-num" id="qNum">第 1 题</div>
         <div class="question-text" id="qText">加载中...</div>
@@ -553,6 +565,21 @@ function renderTeamStrip(teams) {
       <div style="font-size:10px;color:#aaa">${Math.max(0,Math.round(t.hp))}/${t.maxHp||t.hp||1}</div>
     </div>`;
   }).join('');
+  renderBattleArena(teams);
+}
+// ===== 战场场景（所有组角色） =====
+function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
+  const box = document.getElementById('battleArena');
+  if (!box || !teams || !teams.length) { if (box) box.innerHTML = ''; return; }
+  const myIdx = myTeam ? myTeam.idx : -1;
+  box.innerHTML = teams.map((t, i) => {
+    const cls = 'arena-team' + (i === attackIdx ? ' attacking' : '') + (i === hitIdx ? ' hit' : '') + (i === defendIdx ? ' defending' : '');
+    const hero = heroSVG(mySkill ? mySkill.key : 'warrior', t.color);
+    return `<div class="${cls}" data-team="${i}">
+      <div class="arena-hero">${hero}</div>
+      <div class="arena-name" style="color:${t.color}">${t.name}</div>
+    </div>`;
+  }).join('');
 }
 
 // ===== 消息处理 =====
@@ -706,6 +733,18 @@ function revealAction(msg) {
       <div style="font-size:10px;color:#aaa">${hp}/${mx}</div>
     </div>`;
   }).join('');
+  // 战场动画
+  if (msg.action && msg.action.type === 'attack' && msg.action.target != null) {
+    const myIdx = myTeam ? myTeam.idx : -1;
+    renderBattleArena(msg.teams, myIdx, msg.action.target);
+    play3DAction('attack');
+  } else if (msg.action && msg.action.type === 'shield') {
+    const myIdx = myTeam ? myTeam.idx : -1;
+    renderBattleArena(msg.teams, null, null, myIdx);
+    play3DAction('shield');
+  } else {
+    renderBattleArena(msg.teams);
+  }
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal ' + (msg.correct ? 'right show fx-correct' : 'wrong show fx-wrong');
   // 浮字特效
@@ -717,7 +756,6 @@ function revealAction(msg) {
   setTimeout(() => fl.remove(), 1200);
   // 攻击特效：火球
   if (msg.action && msg.action.type === 'attack') {
-    play3DAction('attack');
     const fb = document.createElement('div');
     fb.className = 'fireball';
     fb.style.left = '50%'; fb.style.top = '50%';
@@ -728,7 +766,6 @@ function revealAction(msg) {
   }
   // 护盾特效：全屏金色护盾爆发 + 大字提示
   if (msg.action && msg.action.type === 'shield') {
-    play3DAction('shield');
     rb.classList.add('fx-shield');
     const burst = document.createElement('div');
     burst.className = 'shield-burst';
