@@ -84,10 +84,10 @@
   .team-tag{font-weight:bold;font-size:18px}
   /* ---- 队伍血条条（学生作答顶部） ---- */
   .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
-  .battle-arena{display:flex !important;gap:8px;justify-content:flex-start;align-items:flex-end;margin:10px 0 0;min-height:60px;min-width:200px;background:rgba(0,0,0,.25);border-radius:10px;padding:6px 10px;overflow-x:auto;overflow-y:hidden;border:1px solid rgba(255,255,255,.1)}
+  .battle-arena{display:flex !important;gap:10px;justify-content:flex-start;align-items:flex-end;margin:10px 0 0;min-height:80px;min-width:200px;background:rgba(0,0,0,.3);border-radius:10px;padding:8px 12px;overflow-x:auto;overflow-y:hidden;border:1px solid rgba(255,215,0,.3)}
   .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .3s;flex-shrink:0;cursor:default}
-  .arena-member .arena-hero{width:45px;height:55px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite;display:flex;align-items:flex-end;justify-content:center}
-  .arena-member .arena-hero svg{width:100%;height:100%;margin:0}
+  .arena-member .arena-hero{width:50px;height:62px;display:flex;align-items:flex-end;justify-content:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  .arena-member .arena-hero svg{width:100%;height:100%}
   .arena-member.me{outline:2px solid #ffd700;border-radius:10px;padding:2px}
   .arena-member.hit{animation:arenaHit .6s}
   .arena-member.defend{animation:arenaDefend 2.5s}
@@ -583,14 +583,10 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   const box = document.getElementById('battleArena');
   if (!box) return;
   teams = teams || [];
-  // 收集所有角色：自己排第一，然后按组排列
   let allHeroes = [];
-  // 自己的角色排第一
   const mySkillKey = (mySkill && mySkill.key) ? mySkill.key : 'warrior';
   const myColor = myTeam ? myTeam.color : '#888';
-  const myHero = heroSVG(mySkillKey, myColor);
-  allHeroes.push({ hero: myHero, name: myName || '我', color: myColor, isMe: true });
-  // 其他组的角色
+  allHeroes.push({ hero: heroSVG(mySkillKey, myColor), name: myName || '我', color: myColor, isMe: true });
   teams.forEach((t, i) => {
     (t.members || []).forEach(m => {
       if (myTeam && i === myTeam.idx && m.name === myName) return;
@@ -598,9 +594,11 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
     });
   });
   box.innerHTML = allHeroes.map(h => {
-    const cls = 'arena-member' + (h.isMe ? ' me' : '') + (h.teamIdx === hitIdx ? ' hit' : '') + (h.teamIdx === defendIdx ? ' defend' : '');
-    const dataTeam = h.teamIdx !== undefined ? `data-team="${h.teamIdx}"` : '';
-    return `<div class="${cls}" ${dataTeam}>
+    let cls = 'arena-member' + (h.isMe ? ' me' : '');
+    if (hitIdx !== undefined && h.teamIdx === hitIdx) cls += ' hit';
+    if (defendIdx !== undefined && h.teamIdx === defendIdx) cls += ' defend';
+    const dt = (h.teamIdx !== undefined && !h.isMe) ? `data-team="${h.teamIdx}"` : '';
+    return `<div class="${cls}" ${dt}>
       <div class="arena-hero">${h.hero}</div>
       <div class="arena-mname" style="color:${h.color}">${esc(h.name)}</div>
     </div>`;
@@ -721,7 +719,7 @@ function showQuestion(msg) {
   });
   document.getElementById('revealBox').className = 'reveal';
   document.getElementById('revealBox').innerHTML = '';
-  try { renderBattleArena(cachedTeams); } catch(e){}
+  renderBattleArena(cachedTeams);
   startCountdown(msg.roundTime, 'cdBar', 'cdNum');
 }
 function lockIn(idx, box) {

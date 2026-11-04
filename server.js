@@ -523,17 +523,28 @@ function handleMsg(ws, msg) {
       break;
     }
     case 'reset_game': {
-      // 主持人点"再来一局"：重置到大厅，保留在线玩家与分组，可无限次开战
+      // 主持人点终止/再来一局：彻底重置，清空分组，在线玩家重新自动分组
       if (ws.__id !== state.hostId) { sendTo(ws.__id, { type: 'error', msg: '只有主持人能重置游戏' }); return; }
       state.phase = 'lobby';
+      // 清空所有队伍
+      state.teams = [];
+      // 重新给所有在线玩家分组
+      state.players.forEach(p => {
+        p.score = 0; p.correct = 0; p.total = 0; p.streak = 0; p.qNum = -1;
+        p.done = false; p.answered = false; p.pendingTarget = false; p.answerTimer = null;
+        p.teamIdx = -1;
+        const t = pickTeam();
+        t.members.push(p.id);
+        p.teamIdx = state.teams.indexOf(t);
+      });
+      // 设置队伍血量
       state.teams.forEach(t => {
         t.maxHp = t.members.length * PERSON_HP;
         t.hp = t.maxHp;
         t.alive = t.members.length > 0;
       });
-      state.players.forEach(p => { p.score = 0; p.correct = 0; p.total = 0; p.streak = 0; p.qNum = -1; p.done = false; p.answered = false; p.pendingTarget = false; p.answerTimer = null; });
       state.curIdx = 0;
-      state.qNum = -1; // 首题为第 1 题
+      state.qNum = -1;
       state.log = [];
       state.stats = {};
       state.roundAnswers = {};
