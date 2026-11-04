@@ -263,8 +263,7 @@
           <div style="font-size:11px;color:#bbb;line-height:1.4;margin-top:2px">不攻击，答对为全队加护盾减伤</div>
         </div>
       </div>
-      <button class="btn green large" id="joinBtn" onclick="joinRoom()" disabled>⚔️ 加入战斗！</button>
-    </div>
+      <button class="btn green large" id="joinBtn" onclick="joinRoom()" disabled>⚔️ 加入战斗！</button>    </div>
     <div class="hint-bar">
       <span>正在等待主持人开始游戏</span>
       <button class="link-btn" onclick="showRules()">📖 游戏规则</button>
@@ -414,14 +413,14 @@ document.getElementById('fileInput').addEventListener('change', function(){
     if (box) box.innerHTML = `<img src="${myPhoto}">`;
     const lobbyAv = document.getElementById('lobbyAvatar');
     if (lobbyAv) lobbyAv.innerHTML = `<img src="${myPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
-    document.getElementById('joinBtn').disabled = false;
+    // 头像可选，不改变按钮状态；按钮由名字输入控制
     // 如果已加入游戏，通知服务器更新头像
     if (myPlayerId) send({ type:'update_photo', photo: myPhoto });
   };
   r.readAsDataURL(f);
 });
 document.getElementById('studentName').addEventListener('input', function(){
-  document.getElementById('joinBtn').disabled = !(this.value.trim() && (myPhoto || true));
+  document.getElementById('joinBtn').disabled = !this.value.trim();
 });
 let myRole = 'warrior';
 const ROLE_INFO = {
