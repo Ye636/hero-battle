@@ -378,6 +378,7 @@ let myTeam = null;
 let myPhoto = null;
 let myName = '';
 let cachedTeams = [];
+let pendingEnemies = null; // 正在等待选目标的敌人列表
 let cdTimer = null;
 let cdEnd = 0;
 
@@ -603,6 +604,8 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
       <div class="arena-mname" style="color:${h.color}">${esc(h.name)}</div>
     </div>`;
   }).join('');
+  // 如果正在选目标，重新绑定可点击状态（防止其他玩家操作刷新战场后丢失）
+  if (pendingEnemies) applyPickableTargets();
 }
 
 // ===== 消息处理 =====
@@ -719,6 +722,7 @@ function showQuestion(msg) {
   });
   document.getElementById('revealBox').className = 'reveal';
   document.getElementById('revealBox').innerHTML = '';
+  pendingEnemies = null;
   renderBattleArena(cachedTeams);
   startCountdown(msg.roundTime, 'cdBar', 'cdNum');
 }
@@ -729,26 +733,31 @@ function lockIn(idx, box) {
 }
 function showPickTarget(msg) {
   stopCountdown();
+  pendingEnemies = msg.enemies || [];
   const rb = document.getElementById('revealBox');
   rb.className = 'reveal show';
   rb.style.borderLeft = '4px solid #ff6b6b';
   rb.innerHTML = `<div style="font-weight:bold;color:#ff6b6b">🎯 答对了！点击下方其他队伍的角色进行攻击：</div>`;
-  // 让战场里的敌人角色可点击
+  applyPickableTargets();
+}
+function applyPickableTargets() {
+  if (!pendingEnemies) return;
   const arena = document.getElementById('battleArena');
-  if (arena) {
-    (msg.enemies || []).forEach(e => {
-      const el = arena.querySelector(`[data-team="${e.idx}"]`);
-      if (el) {
-        el.classList.add('pickable');
-        el.title = '点击攻击 ' + e.name;
-        el.onclick = () => {
-          send({ type: 'attack_target', targetIdx: e.idx });
-          rb.innerHTML = '<div style="color:#2ecc71">已选择攻击 ' + esc(e.name) + '，等待其他玩家...</div>';
-          arena.querySelectorAll('.arena-member').forEach(x => { x.classList.remove('pickable'); x.onclick = null; });
-        };
-      }
-    });
-  }
+  if (!arena) return;
+  pendingEnemies.forEach(e => {
+    const el = arena.querySelector(`[data-team="${e.idx}"]`);
+    if (el) {
+      el.classList.add('pickable');
+      el.title = '点击攻击 ' + e.name;
+      el.onclick = () => {
+        send({ type: 'attack_target', targetIdx: e.idx });
+        pendingEnemies = null;
+        const rb = document.getElementById('revealBox');
+        rb.innerHTML = '<div style="color:#2ecc71">已选择攻击 ' + esc(e.name) + '，正在结算...</div>';
+        arena.querySelectorAll('.arena-member').forEach(x => { x.classList.remove('pickable'); x.onclick = null; });
+      };
+    }
+  });
 }
 function revealAction(msg) {
   stopCountdown();
