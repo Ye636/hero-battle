@@ -160,9 +160,9 @@ function hostState() {
         return p ? { id: p.id, name: p.name, photo: p.photo, skill: p.skill, streak: p.streak || 0 } : null;
       }).filter(Boolean)
     })),
-    currentQuestion: (state.phase === 'playing') ? {
+    currentQuestion: (state.phase === 'playing' && state.qNum >= 0 && QUESTIONS[state.qNum]) ? {
       qNum: state.qNum + 1,
-      q: QUESTIONS[state.qNum % QUESTIONS.length].q
+      q: QUESTIONS[state.qNum].q
     } : null,
     answered: aliveCount,
     log: state.log
@@ -202,7 +202,6 @@ function sendQuestion(p) {
   if (state.phase !== 'playing') return;
   p.qNum++;
   if (p.qNum >= QUESTIONS.length) {
-    // 该玩家已答完所有题
     p.done = true;
     sendTo(p.id, { type: 'player_done' });
     sendHost(hostState());
@@ -210,7 +209,8 @@ function sendQuestion(p) {
     checkAllDone();
     return;
   }
-  const q = QUESTIONS[p.qNum % QUESTIONS.length];
+  const q = QUESTIONS[p.qNum];
+  if (!q) { console.error('找不到题目, qNum:', p.qNum, '总数:', QUESTIONS.length); return; }
   p.answerStart = Date.now();
   p.picked = false;
   p.answered = false; // 允许答下一题
@@ -448,8 +448,9 @@ function handleMsg(ws, msg) {
         t.hp = t.maxHp;
         t.alive = t.members.length > 0;
       });
-      state.players.forEach(p => { p.streak = 0; p.qNum = -1; p.done = false; p.answerStart = 0; });
+      state.players.forEach(p => { p.streak = 0; p.qNum = -1; p.done = false; p.answerStart = 0; p.answered = false; p.pendingTarget = false; });
       state.phase = 'playing';
+      state.qNum = -1;
       state.log = [];
       state.stats = {};
       state.shields = {};
