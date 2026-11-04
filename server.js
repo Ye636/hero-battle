@@ -479,6 +479,11 @@ function handleMsg(ws, msg) {
       state.players.forEach(p => sendQuestion(p));
       break;
     }
+    case 'update_photo': {
+      const p = playerFromId(ws.__id);
+      if (p) { p.photo = msg.photo; broadcast(lobbyUpdate()); sendHost(hostState()); broadcastTeams(); }
+      break;
+    }
     case 'answer': {
       if (state.phase !== 'playing') return;
       const p = playerFromId(ws.__id);
