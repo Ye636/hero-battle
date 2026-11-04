@@ -84,7 +84,7 @@
   .team-tag{font-weight:bold;font-size:18px}
   /* ---- 队伍血条条（学生作答顶部） ---- */
   .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
-  .battle-arena{display:flex;gap:6px;justify-content:flex-start;align-items:flex-end;margin:6px 0;min-height:50px;max-height:60px;background:rgba(0,0,0,.15);border-radius:8px;padding:4px 8px;overflow-x:auto;overflow-y:hidden}
+  .battle-arena{display:flex;gap:6px;justify-content:flex-start;align-items:flex-end;margin:8px 0 0;min-height:40px;background:rgba(0,0,0,.15);border-radius:8px;padding:4px 8px;overflow-x:auto;overflow-y:hidden}
   .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .3s}
   .arena-member .arena-hero{width:35px;height:45px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
   .arena-member.me{outline:2px solid #ffd700;border-radius:8px;padding:2px}
@@ -318,7 +318,6 @@
   <div class="hidden" id="answerPanel">
     <div class="panel">
       <div class="team-strip" id="teamStrip"></div>
-      <div class="battle-arena" id="battleArena"></div>
       <div class="question-box">
         <div class="question-num" id="qNum">第 1 题</div>
         <div class="question-text" id="qText">加载中...</div>
@@ -327,6 +326,7 @@
         <div class="cd-num" id="cdNum"></div>
         <div class="reveal" id="revealBox"></div>
       </div>
+      <div class="battle-arena" id="battleArena"></div>
     </div>
   </div>
 
