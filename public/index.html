@@ -86,7 +86,7 @@
   .team-strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
   .battle-arena{display:flex !important;gap:10px;justify-content:flex-start;align-items:flex-end;margin:10px 0 0;min-height:80px;min-width:200px;background:rgba(0,0,0,.3);border-radius:10px;padding:8px 12px;overflow-x:auto;overflow-y:hidden;border:1px solid rgba(255,215,0,.3)}
   .arena-member{display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .3s;flex-shrink:0;cursor:default}
-  .arena-member .arena-hero{width:50px;height:62px;display:flex;align-items:flex-end;justify-content:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
+  .arena-member .arena-hero{width:80px;height:100px;display:flex;align-items:flex-end;justify-content:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:arenaIdle 2s ease-in-out infinite}
   .arena-member .arena-hero svg{width:100%;height:100%}
   .arena-member.me{outline:2px solid #ffd700;border-radius:10px;padding:2px}
   .arena-member.hit{animation:arenaHit .6s}
@@ -146,15 +146,15 @@
   .fireball{position:fixed;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#ffd700,#ff4500);box-shadow:0 0 20px #ff4500;z-index:999;pointer-events:none;animation:fireball .7s ease-out forwards}
   /* 角色动画形象 */
   .hero-sprite{display:inline-block;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));position:relative;vertical-align:middle}
-  .hero-2d{width:50px;height:62px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));animation:heroIdle 2s ease-in-out infinite;position:relative;transform-origin:center bottom;display:inline-block;vertical-align:middle;margin-right:8px}
+  .hero-2d{width:80px;height:100px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));animation:heroIdle 2s ease-in-out infinite;position:relative;transform-origin:center bottom;display:inline-block;vertical-align:middle;margin-right:8px}
   @keyframes heroIdle{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
   .hero-2d.hero-attack{animation:heroAttack 1s ease-out !important}
   @keyframes heroAttack{0%{transform:translateX(0) rotate(0) scale(1)}15%{transform:translateX(-15px) rotate(-8deg) scale(1.1)}45%{transform:translateX(50px) rotate(15deg) scale(1.3)}60%{transform:translateX(40px) rotate(10deg) scale(1.2)}100%{transform:translateX(0) rotate(0) scale(1)}}
-  .hero-2d.hero-attack::after{content:'⚔️';position:absolute;top:10%;right:-30px;font-size:40px;animation:slashEmoji 1s ease-out forwards}
+  .hero-2d.hero-attack::after{content:'⚔️';position:absolute;top:10%;right:-40px;font-size:50px;animation:slashEmoji 1s ease-out forwards}
   @keyframes slashEmoji{0%{opacity:0;transform:scale(0.3) rotate(0)}50%{opacity:1;transform:scale(2) rotate(180deg)}100%{opacity:0;transform:scale(3) rotate(360deg)}}
   .hero-2d.hero-shield{animation:heroShield 2.5s ease-out !important}
   @keyframes heroShield{0%{transform:scale(1)}20%{transform:scale(1.3) translateY(-10px)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
-  .hero-2d.hero-shield::before{content:'🛡️';position:absolute;top:0;right:-20px;font-size:50px;animation:shieldEmoji 2.5s ease-out forwards}
+  .hero-2d.hero-shield::before{content:'🛡️';position:absolute;top:0;right:-30px;font-size:60px;animation:shieldEmoji 2.5s ease-out forwards}
   @keyframes shieldEmoji{0%{opacity:0;transform:scale(0.3)}30%{opacity:1;transform:scale(1.5)}100%{opacity:0.8;transform:scale(1.3)}}
   .hero-orb{animation:orbGlow 1.5s ease-in-out infinite}
   @keyframes orbGlow{0%,100%{filter:drop-shadow(0 0 4px #9b59b6)}50%{filter:drop-shadow(0 0 18px #9b59b6) brightness(1.5)}}
