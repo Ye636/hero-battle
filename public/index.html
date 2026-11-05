@@ -393,6 +393,44 @@ function connect() {
   ws.onmessage = (e) => { try { handleMsg(JSON.parse(e.data)); } catch(err){} };
   ws.onclose = () => { setTimeout(connect, 1500); };
 }
+// ===== 音效系统 =====
+let audioCtx = null;
+let bgmTimer = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq, duration, type='sine', volume=0.15) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+function sfxCorrect() { playTone(880, 0.15, 'sine', 0.2); setTimeout(()=>playTone(1320, 0.2, 'sine', 0.2), 100); }
+function sfxWrong() { playTone(220, 0.3, 'sawtooth', 0.15); }
+function sfxAttack() { playTone(440, 0.1, 'square', 0.15); setTimeout(()=>playTone(220, 0.15, 'square', 0.15), 80); }
+function sfxPick() { playTone(660, 0.08, 'triangle', 0.15); }
+function sfxTick() { playTone(1000, 0.05, 'sine', 0.08); }
+function sfxWin() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'sine',0.2),i*150)); }
+function startBGM() {
+  if (bgmTimer) return;
+  const notes = [262, 330, 392, 330, 294, 370, 440, 370];
+  let i = 0;
+  bgmTimer = setInterval(() => {
+    playTone(notes[i % notes.length], 0.25, 'sine', 0.05);
+    i++;
+  }, 300);
+}
+function stopBGM() { if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; } }
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
 function show(id) {
   ['joinPanel','hostPanel','lobbyPanel','answerPanel','hostBattlePanel','resultPanel'].forEach(p => {
@@ -676,6 +714,7 @@ function handleMsg(msg) {
 
     case 'game_started':
       if (isHost) show('hostBattlePanel');
+      startBGM();
       break;
 
     // ===== 独立答题：每人各自进度 =====
@@ -684,7 +723,7 @@ function handleMsg(msg) {
       break;
 
     case 'action_result':
-      if (!isHost) revealAction(msg);
+      if (!isHost) { revealAction(msg); if (msg.correct) sfxCorrect(); else sfxWrong(); }
       break;
 
     case 'player_done':
@@ -692,7 +731,7 @@ function handleMsg(msg) {
       break;
 
     case 'pick_target':
-      if (!isHost) showPickTarget(msg);
+      if (!isHost) { showPickTarget(msg); sfxPick(); }
       break;
 
     case 'state_update':
@@ -704,6 +743,8 @@ function handleMsg(msg) {
       break;
 
     case 'game_end':
+      stopBGM();
+      sfxWin();
       showResult(msg);
       break;
 
@@ -798,6 +839,7 @@ function revealAction(msg) {
     const myIdx = myTeam ? myTeam.idx : -1;
     renderBattleArena(msg.teams, myIdx, msg.action.target);
     play3DAction('attack');
+    sfxAttack();
   } else if (msg.action && msg.action.type === 'shield') {
     const myIdx = myTeam ? myTeam.idx : -1;
     renderBattleArena(msg.teams, null, null, myIdx);

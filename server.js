@@ -525,6 +525,15 @@ function handleMsg(ws, msg) {
         p.correct = (p.correct || 0) + 1;
         p.streak = (p.streak || 0) + 1;
         const sk = p.skill;
+        const myTeam = state.teams[p.teamIdx];
+        // 自己队伍已被击败，答对不产生攻击，直接结算
+        if (!myTeam || !myTeam.alive) {
+          sendHost(hostState());
+          broadcastTeams();
+          sendHost({ type: 'answer_stats', stats: buildStats() });
+          advanceAfterAction(p, { correct: true, action: { type: 'no_attack', reason: '队伍已被击败' } });
+          break;
+        }
         // 答对：攻击手选目标，盾牌手自动加盾；选目标无时间限制
         if (sk.key === 'warrior' || sk.key === 'mage') {
           const enemies = state.teams.map((tt, idx) => ({ idx, name: tt.name, color: tt.color, alive: tt.alive }))
