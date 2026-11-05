@@ -366,14 +366,24 @@ function endGame() {
   clearTimeout(state.roundTimer);
   clearTimeout(state.nextTimer);
   // 队伍按剩余血量排名，血最多的队获胜
-  const teamRank = state.teams.slice().sort((a, b) => b.hp - a.hp).map(t => ({
-    name: t.name, color: t.color, hp: Math.max(0, t.hp), maxHp: t.maxHp, members: t.members.length
-  }));
+  const teamRank = state.teams.slice().sort((a, b) => b.hp - a.hp).map(t => {
+    const members = t.members.map(mid => {
+      const p = state.players.find(x => x.id === mid);
+      return p ? { name: p.name, photo: p.photo, correct: p.correct || 0, total: QUESTIONS.length, totalTime: p.totalTime || 0, skill: p.skill } : null;
+    }).filter(Boolean);
+    return {
+      name: t.name, color: t.color, hp: Math.max(0, t.hp), maxHp: t.maxHp, members: t.members.length, memberList: members
+    };
+  });
   const ranking = state.players
     .slice()
-    .sort((a, b) => (b.correct || 0) - (a.correct || 0))
-    .map(p => ({
-      name: p.name, photo: p.photo, correct: p.correct, total: QUESTIONS.length,
+    .sort((a, b) => {
+      if ((b.correct || 0) !== (a.correct || 0)) return (b.correct || 0) - (a.correct || 0);
+      return (a.totalTime || 0) - (b.totalTime || 0);
+    })
+    .map((p, i) => ({
+      rank: i + 1, name: p.name, photo: p.photo, correct: p.correct, total: QUESTIONS.length,
+      totalTime: p.totalTime || 0, accuracy: Math.round((p.correct || 0) / QUESTIONS.length * 100),
       teamName: teamOf(p) ? teamOf(p).name : '', skill: p.skill
     }));
   // 个人榜：答对题数 + 速度（答对越快排名越高）
@@ -386,6 +396,7 @@ function endGame() {
     .slice(0, 5)
     .map((p, i) => ({
       rank: i + 1, name: p.name, photo: p.photo, correct: p.correct || 0,
+      accuracy: Math.round((p.correct || 0) / QUESTIONS.length * 100),
       teamName: teamOf(p) ? teamOf(p).name : '', skill: p.skill
     }));
   broadcast({ type: 'game_end', teamRank, ranking, top5 });

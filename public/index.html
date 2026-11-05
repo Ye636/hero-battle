@@ -958,21 +958,28 @@ function showResult(msg) {
   document.getElementById('championText').innerHTML = winner
     ? `👑 ${winner.name} 获胜！（剩余血量 ${Math.round(winner.hp)}/${winner.maxHp}）`
     : '比赛结束';
-  // 队伍排名
+  // 队伍排名（含成员列表）
   const box = document.getElementById('finalRanks');
   let html = '<p style="text-align:center;color:#ffd700;margin:10px 0">🏆 队伍排名（按剩余血量）</p>';
-  html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
   tr.forEach((t, i) => {
     const pct = t.maxHp ? Math.max(0, t.hp / t.maxHp * 100) : 0;
-    html += `<div style="min-width:140px;padding:10px;border-radius:12px;border:2px solid ${t.color};background:rgba(255,255,255,0.05)">
-      <div style="color:${t.color};font-weight:bold">${['🥇','🥈','🥉','4️⃣'][i]||i+1} ${t.name}</div>
-      <div style="font-size:12px;color:#aaa">${t.members}人</div>
+    html += `<div style="padding:12px;margin:8px 0;border-radius:12px;border:2px solid ${t.color};background:rgba(255,255,255,0.05)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="color:${t.color};font-weight:bold;font-size:16px">${['🥇','🥈','🥉','4️⃣'][i]||i+1} ${t.name}</div>
+        <div style="font-size:13px;color:#ccc">${Math.round(t.hp)}/${t.maxHp} HP</div>
+      </div>
       <div style="height:6px;background:#222;border-radius:3px;margin-top:6px"><i style="display:block;height:100%;width:${pct}%;background:${t.color};border-radius:3px"></i></div>
-      <div style="font-size:12px;color:#ccc;margin-top:4px">${Math.round(t.hp)}/${t.maxHp}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        ${(t.memberList || []).map(m => `
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:rgba(255,255,255,.06);border-radius:8px;font-size:12px">
+            ${m.photo?`<img src="${m.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover">`:'❓'}
+            <span style="color:#fff">${esc(m.name)}</span>
+            <span style="color:#aaa">${m.correct}/${m.total}题</span>
+          </div>`).join('')}
+      </div>
     </div>`;
   });
-  html += '</div>';
-  // 个人榜 Top 5
+  // 个人榜 Top 5（正确率+速度）
   if (msg.top5 && msg.top5.length) {
     html += '<p style="text-align:center;color:#ffd700;margin:16px 0 8px">⭐ 最快最强大脑 Top 5</p>';
     html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
@@ -981,21 +988,23 @@ function showResult(msg) {
       html += `<div style="min-width:120px;padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.05));border:2px solid #ffd700;text-align:center">
         <div style="font-size:24px">${medal}</div>
         <div style="font-weight:bold;color:#fff;margin:4px 0">${esc(p.name)}</div>
-        <div style="font-size:12px;color:#ffd700">答对 ${p.correct} 题</div>
+        <div style="font-size:12px;color:#ffd700">答对 ${p.correct} 题（${p.accuracy}%）</div>
         <div style="font-size:11px;color:#aaa">${p.teamName} · ${p.skill.emoji}${p.skill.name}</div>
       </div>`;
     });
     html += '</div>';
   }
-  html += '<p style="text-align:center;color:#ffd700;margin:10px 0">📋 个人正确率榜</p>';
-  (msg.ranking || []).slice(0, 8).forEach((r, i) => {
+  // 全部个人正确率+速度排名
+  html += '<p style="text-align:center;color:#ffd700;margin:10px 0">📋 全部参与者（正确率+速度排名）</p>';
+  (msg.ranking || []).forEach((r, i) => {
     const medal = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'][i] || (i+1)+'️⃣';
+    const sec = Math.round((r.totalTime || 0) / 1000);
     html += `<div class="rank-item r${Math.min(i+1,5)}">
       <div class="rank-medal">${medal}</div>
       <div class="rank-avatar">${r.photo?`<img src="${r.photo}">`:'❓'}</div>
       <div class="rank-info">
         <div class="rn">${esc(r.name)}</div>
-        <div class="rd">${r.teamName} · ${r.skill.emoji}${r.skill.name} · 答对${r.correct}/${r.total}</div>
+        <div class="rd">${r.teamName} · ${r.skill.emoji}${r.skill.name} · 答对${r.correct}/${r.total}（${r.accuracy}%） · 用时${sec}秒</div>
       </div>
     </div>`;
   });
