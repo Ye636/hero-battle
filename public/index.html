@@ -607,10 +607,11 @@ function renderBattleArena(teams, attackIdx, hitIdx, defendIdx) {
   const myColor = myTeam ? myTeam.color : '#888';
   allHeroes.push({ hero: heroSVG(mySkillKey, myColor, myPhoto), name: myName || '我', color: myColor, isMe: true });
   teams.forEach((t, i) => {
-    (t.members || []).forEach(m => {
-      if (myTeam && i === myTeam.idx && m.name === myName) return;
-      allHeroes.push({ hero: heroSVG(m.skill || 'warrior', t.color, m.photo), name: m.name, color: t.color, teamIdx: i });
-    });
+    // 每个其他队伍只随机选一位成员显示
+    const members = (t.members || []).filter(m => !(myTeam && i === myTeam.idx && m.name === myName));
+    if (members.length === 0) return;
+    const randomMember = members[Math.floor(Math.random() * members.length)];
+    allHeroes.push({ hero: heroSVG(randomMember.skill || 'warrior', t.color, randomMember.photo), name: randomMember.name, color: t.color, teamIdx: i });
   });
   box.innerHTML = allHeroes.map(h => {
     let cls = 'arena-member' + (h.isMe ? ' me' : '');
