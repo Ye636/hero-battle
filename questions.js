@@ -20,8 +20,8 @@ const QUESTIONS = [
   {
     q: 'Being real or genuine, not copied or fake.',
     img: '🎭',
-    options: ['possibility', 'authenticity', 'necessity', 'civility'],
-    answer: 1,
+    options: ['authenticity', 'possibility', 'necessity', 'civility'],
+    answer: 0,
     explain: 'authenticity = 真实性、真伪'
   },
   {
@@ -34,15 +34,15 @@ const QUESTIONS = [
   {
     q: 'A chance that something may happen or be true.',
     img: '🌱',
-    options: ['necessity', 'possibility', 'authenticity', 'curiosity'],
-    answer: 1,
+    options: ['possibility', 'necessity', 'authenticity', 'curiosity'],
+    answer: 0,
     explain: 'possibility = 可能性（possible 的名词）'
   },
   {
     q: 'Something that you must have or must do.',
     img: '⚙️',
-    options: ['possibility', 'intensity', 'necessity', 'civility'],
-    answer: 2,
+    options: ['necessity', 'possibility', 'intensity', 'civility'],
+    answer: 0,
     explain: 'necessity = 必需品、必要（necessary 的名词，不规则变化）'
   },
   {
@@ -76,8 +76,8 @@ const QUESTIONS = [
   {
     q: 'The reason or drive that makes you want to do something.',
     img: '🚀',
-    options: ['mission', 'motivation', 'boundary', 'thrill'],
-    answer: 1,
+    options: ['motivation', 'mission', 'boundary', 'thrill'],
+    answer: 0,
     explain: 'motivation = 动力、动机'
   },
   {
@@ -97,8 +97,8 @@ const QUESTIONS = [
   {
     q: 'A system of connected people, routes or things.',
     img: '🕸️',
-    options: ['trek', 'network', 'launch', 'seek'],
-    answer: 1,
+    options: ['trek', 'launch', 'seek', 'network'],
+    answer: 3,
     explain: 'network = 网络'
   },
   {
@@ -111,57 +111,57 @@ const QUESTIONS = [
   {
     q: 'To travel all the way around something, especially the world.',
     img: '🌍',
-    options: ['explore', 'circumnavigate', 'launch', 'settle'],
-    answer: 1,
+    options: ['explore', 'launch', 'circumnavigate', 'settle'],
+    answer: 2,
     explain: 'circumnavigate = 环航、环绕世界'
   },
   {
     q: 'To send a ship, rocket or spacecraft into the sky or sea.',
     img: '🛫',
-    options: ['seek', 'endure', 'launch', 'motivate'],
-    answer: 2,
+    options: ['seek', 'endure', 'motivate', 'launch'],
+    answer: 3,
     explain: 'launch = 发射'
   },
   {
     q: 'The line that marks the edge or limit of an area.',
     img: '🚧',
-    options: ['network', 'boundary', 'mission', 'hypothesis'],
-    answer: 1,
+    options: ['network', 'mission', 'boundary', 'hypothesis'],
+    answer: 2,
     explain: 'boundary = 边界'
   },
   {
     q: 'The ability to continue doing something difficult for a long time.',
     img: '🏃',
-    options: ['motivation', 'thrill', 'endurance', 'civility'],
-    answer: 2,
+    options: ['motivation', 'thrill', 'civility', 'endurance'],
+    answer: 3,
     explain: 'endurance = 耐力'
   },
   {
     q: 'An important job or task that someone is sent to do.',
     img: '🎯',
-    options: ['boundary', 'trek', 'mission', 'seek'],
-    answer: 2,
+    options: ['boundary', 'trek', 'seek', 'mission'],
+    answer: 3,
     explain: 'mission = 任务'
   },
   {
     q: 'An idea that is tested through experiments to see if it is true.',
     img: '🔬',
-    options: ['mission', 'settlement', 'hypothesis', 'network'],
-    answer: 2,
+    options: ['mission', 'hypothesis', 'settlement', 'network'],
+    answer: 1,
     explain: 'hypothesis = 假设'
   },
   {
     q: 'To discover or draw the features of an area or the world.',
     img: '🗺️',
-    options: ['launch', 'map', 'endure', 'thrill'],
-    answer: 1,
+    options: ['launch', 'endure', 'thrill', 'map'],
+    answer: 3,
     explain: 'map (v.) = 绘制、勘测'
   },
   {
     q: 'To look for or try to find something.',
     img: '🔎',
-    options: ['launch', 'motivate', 'seek', 'endure'],
-    answer: 2,
+    options: ['seek', 'launch', 'motivate', 'endure'],
+    answer: 0,
     explain: 'seek = 寻找'
   },
   {
