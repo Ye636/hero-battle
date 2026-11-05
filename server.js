@@ -344,8 +344,7 @@ function teamDamage(t, dmg, fromIdx, fromName, fromColor, fromEmoji) {
 }
 
 function checkEnd() {
-  const alive = state.teams.filter(t => t.alive && t.members.length > 0);
-  if (alive.length <= 1) { endGame(); return true; }
+  // 不再因为只剩1个队伍就结束游戏，让所有活着的玩家继续答题直到24题全部答完
   return false;
 }
 
